@@ -1,4 +1,3 @@
-'use client'
 import  { useState, useEffect, useMemo, useCallback } from 'react';
 import { ShoppingCart, X, Clock, MapPin, Phone, Search, Plus, Minus, Trash2, ChevronRight, Check, Menu, Star, Heart, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 
@@ -45,7 +44,7 @@ const STORAGE_KEYS = {
   ORDERS: 'bsquare-orders'
 } as const;
 
-const MENU_DATA = {
+const MENU_DATA: Record<string, MenuItem[]> = {
   beefBurgers: [
     { id: 1, name: 'Smash Cheese Burger', price: 10.00, description: 'Beef patty, American Cheese, Caramelised onion, Tomato sauce and mustard', category: 'Beef Burgers', rating: 4.8, prepTime: 12, isPopular: true },
     { id: 2, name: 'Classic Aussie', price: 13.50, description: 'Beef patty, American Cheese, Caramelised onion, Lettuce, Tomato, Beetroot, BBQ & HerbMayo', category: 'Beef Burgers', rating: 4.7, prepTime: 15 },
@@ -84,7 +83,7 @@ const MENU_DATA = {
     { id: 25, name: 'Strawberry Milkshake', price: 6.50, description: 'Fresh strawberry milkshake', category: 'Drinks', rating: 4.6, prepTime: 5 },
     { id: 26, name: 'Soft Drink', price: 3.00, description: '375ml can or 600ml bottle', category: 'Drinks', rating: 4.3, prepTime: 2 }
   ]
-} as const;
+};
 
 const CATEGORIES = [
   { key: 'all' as CategoryType, label: 'All Items', emoji: '🍽️' },
@@ -117,38 +116,8 @@ export default function BSquareEatery() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
 
-  // Load persisted data on mount
-  useEffect(() => {
-    try {
-      const savedCart = window.storage?.getItem?.(STORAGE_KEYS.CART);
-      const savedFavorites = window.storage?.getItem?.(STORAGE_KEYS.FAVORITES);
-      const savedOrders = window.storage?.getItem?.(STORAGE_KEYS.ORDERS);
-      
-      if (savedCart) setCart(JSON.parse(savedCart));
-      if (savedFavorites) setFavorites(JSON.parse(savedFavorites));
-      if (savedOrders) setOrderHistory(JSON.parse(savedOrders));
-    } catch (error) {
-      console.error('Error loading saved data:', error);
-    }
-  }, []);
-
-  // Persist cart changes
-  useEffect(() => {
-    try {
-      window.storage?.setItem?.(STORAGE_KEYS.CART, JSON.stringify(cart));
-    } catch (error) {
-      console.error('Error saving cart:', error);
-    }
-  }, [cart]);
-
-  // Persist favorites changes
-  useEffect(() => {
-    try {
-      window.storage?.setItem?.(STORAGE_KEYS.FAVORITES, JSON.stringify(favorites));
-    } catch (error) {
-      console.error('Error saving favorites:', error);
-    }
-  }, [favorites]);
+  // Note: Data persists in memory during the session only
+  // localStorage is not supported in Claude artifacts
 
   // Close mobile menu when page changes
   useEffect(() => {
@@ -239,12 +208,6 @@ export default function BSquareEatery() {
       const newHistory = [order, ...orderHistory];
       setOrderHistory(newHistory);
       
-      try {
-        window.storage?.setItem?.(STORAGE_KEYS.ORDERS, JSON.stringify(newHistory));
-      } catch (error) {
-        console.error('Error saving order:', error);
-      }
-      
       setOrderPlaced(true);
       setTimeout(() => {
         setCart([]);
@@ -282,17 +245,17 @@ export default function BSquareEatery() {
   const isCheckoutDisabled = checkoutStep === 2 && (!orderDetails.name.trim() || !orderDetails.phone.trim());
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-orange-50 via-white to-red-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-white/80 shadow-lg border-b border-orange-100">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <button onClick={() => setCurrentPage('home')} className="flex items-center gap-3 group">
-              <div className="w-12 h-12 bg-linear-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
                 🍔
               </div>
               <div className="hidden sm:block">
-                <span className="text-xl font-black `bg-linear-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                <span className="text-xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                   BSquare Eatery
                 </span>
                 <p className="text-xs text-gray-500 font-medium">Fresh & Delicious</p>
@@ -312,7 +275,7 @@ export default function BSquareEatery() {
                 >
                   {page}
                   {currentPage === page && (
-                    <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-linear-to-br from-orange-500 to-red-500 rounded-full" />
+                    <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-full" />
                   )}
                 </button>
               ))}
@@ -321,7 +284,7 @@ export default function BSquareEatery() {
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setShowCart(true)} 
-                className="relative p-3 bg-linear-to-br from-orange-500 to-red-600 text-white rounded-2xl hover:shadow-xl transition-all hover:scale-105"
+                className="relative p-3 bg-gradient-to-br from-orange-500 to-red-600 text-white rounded-2xl hover:shadow-xl transition-all hover:scale-105"
                 aria-label="Shopping cart"
               >
                 <ShoppingCart size={20} />
@@ -351,7 +314,7 @@ export default function BSquareEatery() {
                   onClick={() => setCurrentPage(page)} 
                   className={`block w-full text-left py-3 px-4 font-bold capitalize rounded-xl transition-all ${
                     currentPage === page 
-                      ? 'bg-linear-to-br from-orange-500 to-red-500 text-white' 
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' 
                       : 'text-gray-600 hover:bg-orange-50'
                   }`}
                 >
@@ -366,7 +329,7 @@ export default function BSquareEatery() {
       {/* Hero Section */}
       {currentPage === 'home' && (
         <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-linear-to-br from-orange-400 via-red-500 to-pink-600"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-400 via-red-500 to-pink-600"></div>
           
           <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none">
             <div className="absolute top-20 left-10 text-8xl animate-bounce" style={{ animationDelay: '0s' }}>🍔</div>
@@ -384,7 +347,7 @@ export default function BSquareEatery() {
             
             <h1 className="text-7xl md:text-9xl font-black text-white mb-6 drop-shadow-2xl leading-tight">
               BSquare<br/>
-              <span className="bg-linear-to-br from-yellow-300 to-orange-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
                 Eatery
               </span>
             </h1>
@@ -446,7 +409,7 @@ export default function BSquareEatery() {
         <div className="pt-24 pb-16 min-h-screen">
           <div className="max-w-7xl mx-auto px-4 py-8">
             <div className="text-center mb-12">
-              <h1 className="text-6xl font-black bg-linear-to-br from-orange-600 to-red-600 bg-clip-text text-transparent mb-3">
+              <h1 className="text-6xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-3">
                 Our Menu
               </h1>
               <p className="text-2xl text-gray-600 font-medium">Handcrafted with passion</p>
@@ -472,7 +435,7 @@ export default function BSquareEatery() {
                   onClick={() => setSelectedCategory(cat.key)} 
                   className={`px-6 py-3 rounded-2xl font-bold whitespace-nowrap transition-all shadow-md hover:shadow-lg ${
                     selectedCategory === cat.key 
-                      ? 'bg-linear-to-br from-orange-500 to-red-500 text-white scale-105' 
+                      ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white scale-105' 
                       : 'bg-white text-gray-700 border-2 border-gray-100 hover:border-orange-300'
                   }`}
                 >
@@ -489,7 +452,7 @@ export default function BSquareEatery() {
                   className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all hover:-translate-y-2 overflow-hidden cursor-pointer border-2 border-transparent hover:border-orange-200"
                   onClick={() => openItemModal(item)}
                 >
-                  <div className="relative bg-linear-to-br from-orange-400 via-red-400 to-pink-400 h-48 flex items-center justify-center overflow-hidden">
+                  <div className="relative bg-gradient-to-br from-orange-400 via-red-400 to-pink-400 h-48 flex items-center justify-center overflow-hidden">
                     <div className="text-8xl group-hover:scale-110 transition-transform">
                       {getItemEmoji(item.category)}
                     </div>
@@ -542,12 +505,12 @@ export default function BSquareEatery() {
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <span className="text-3xl font-black bg-linear-to-br from-orange-600 to-red-600 bg-clip-text text-transparent">
+                      <span className="text-3xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                         ${item.price.toFixed(2)}
                       </span>
                       <button 
                         onClick={(e) => { e.stopPropagation(); addToCart(item); }} 
-                        className="px-6 py-3 bg-linear-to-br from-orange-500 to-red-500 text-white rounded-2xl font-bold hover:shadow-xl transition-all hover:scale-105 flex items-center gap-2"
+                        className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-bold hover:shadow-xl transition-all hover:scale-105 flex items-center gap-2"
                       >
                         <Plus size={18} />
                         Add
@@ -574,7 +537,7 @@ export default function BSquareEatery() {
         <div className="pt-24 pb-16 min-h-screen">
           <div className="max-w-5xl mx-auto px-4 py-12">
             <div className="text-center mb-16">
-              <h1 className="text-6xl font-black bg-linear-to-br from-orange-600 to-red-600 bg-clip-text text-transparent mb-3">
+              <h1 className="text-6xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-3">
                 About Us
               </h1>
               <p className="text-2xl text-gray-600 font-medium">The story behind the flavor</p>
@@ -591,8 +554,8 @@ export default function BSquareEatery() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-8">
-              <div className="bg-linear-to-br from-orange-50 to-red-50 rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border border-orange-100">
-                <div className="w-16 h-16 bg-linear-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border border-orange-100">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Clock size={32} className="text-white" />
                 </div>
                 <h3 className="font-black text-xl mb-3 text-gray-900">Opening Hours</h3>
@@ -600,8 +563,8 @@ export default function BSquareEatery() {
                 <p className="text-orange-600 font-bold text-lg">10:00 AM - 9:00 PM</p>
               </div>
               
-              <div className="bg-linear-to-br from-orange-50 to-red-50 rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border border-orange-100">
-                <div className="w-16 h-16 bg-linear-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border border-orange-100">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <MapPin size={32} className="text-white" />
                 </div>
                 <h3 className="font-black text-xl mb-3 text-gray-900">Find Us</h3>
@@ -609,8 +572,8 @@ export default function BSquareEatery() {
                 <p className="text-orange-600 font-bold">Food District, FC 12345</p>
               </div>
               
-              <div className="bg-linear-to-br from-orange-50 to-red-50 rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border border-orange-100">
-                <div className="w-16 h-16 bg-linear-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border border-orange-100">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <Phone size={32} className="text-white" />
                 </div>
                 <h3 className="font-black text-xl mb-3 text-gray-900">Contact</h3>
@@ -627,7 +590,7 @@ export default function BSquareEatery() {
         <div className="pt-24 pb-16 min-h-screen">
           <div className="max-w-4xl mx-auto px-4 py-8">
             <div className="text-center mb-12">
-              <h1 className="text-6xl font-black bg-linear-to-br from-orange-600 to-red-600 bg-clip-text text-transparent mb-3">
+              <h1 className="text-6xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-3">
                 Order History
               </h1>
               <p className="text-xl text-gray-600">Track your delicious journeys</p>
@@ -640,7 +603,7 @@ export default function BSquareEatery() {
                 <p className="text-gray-500 mb-8">Start your culinary adventure!</p>
                 <button 
                   onClick={() => setCurrentPage('menu')} 
-                  className="px-8 py-4 bg-linear-to-br from-orange-500 to-red-500 text-white rounded-2xl font-bold hover:shadow-xl transition-all"
+                  className="px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-bold hover:shadow-xl transition-all"
                 >
                   Browse Menu
                 </button>
@@ -687,7 +650,7 @@ export default function BSquareEatery() {
         
         <div className={`absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl transform transition-transform duration-300 ${showCart ? 'translate-x-0' : 'translate-x-full'} flex flex-col`}>
           <div className="flex flex-col h-full overflow-hidden">
-            <div className="p-6 bg-linear-to-br from-orange-500 via-red-500 to-pink-500 text-white shrink-0">
+            <div className="p-6 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white flex-shrink-0">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-3xl font-black">Your Order</h2>
                 <button 
@@ -713,7 +676,7 @@ export default function BSquareEatery() {
                 <p className="text-gray-500 mb-8">Add some delicious items to get started!</p>
                 <button 
                   onClick={() => { setShowCart(false); setCurrentPage('menu'); }} 
-                  className="px-10 py-4 bg-linear-to-r from-orange-500 to-red-500 text-white rounded-2xl font-bold hover:shadow-xl transition-all"
+                  className="px-10 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-bold hover:shadow-xl transition-all"
                 >
                   Browse Menu
                 </button>
@@ -737,9 +700,9 @@ export default function BSquareEatery() {
                   {checkoutStep === 1 && (
                     <div className="space-y-4">
                       {cart.map(item => (
-                        <div key={item.id} className="bg-linear-to-br from-orange-50 to-red-50 rounded-2xl p-5 border-2 border-orange-100">
+                        <div key={item.id} className="bg-gradient-to-br from-orange-50 to-red-50 rounded-2xl p-5 border-2 border-orange-100">
                           <div className="flex gap-4">
-                            <div className="text-5xl shrink-0">{getItemEmoji(item.category)}</div>
+                            <div className="text-5xl flex-shrink-0">{getItemEmoji(item.category)}</div>
                             <div className="flex-1 min-w-0">
                               <h3 className="font-bold text-gray-900 text-lg mb-1 truncate">{item.name}</h3>
                               <p className="text-orange-600 font-black text-lg">${item.price.toFixed(2)}</p>
@@ -873,7 +836,7 @@ export default function BSquareEatery() {
                       
                       <div className="mt-8 p-5 bg-blue-50 rounded-2xl border-2 border-blue-200">
                         <div className="flex gap-3">
-                          <AlertCircle className="text-blue-600 shrink-0" size={24} />
+                          <AlertCircle className="text-blue-600 flex-shrink-0" size={24} />
                           <div>
                             <p className="font-bold text-blue-900 mb-1">Order Summary</p>
                             <p className="text-sm text-blue-700">Name: {orderDetails.name || 'Not provided'}</p>
@@ -886,7 +849,7 @@ export default function BSquareEatery() {
                   )}
                 </div>
 
-                <div className="p-6 border-t-2 border-gray-100 bg-linear-to-br from-gray-50 to-orange-50 shrink-0">
+                <div className="p-6 border-t-2 border-gray-100 bg-gradient-to-br from-gray-50 to-orange-50 flex-shrink-0">
                   {checkoutStep > 1 && (
                     <button 
                       onClick={() => setCheckoutStep(prev => prev - 1)} 
@@ -899,7 +862,7 @@ export default function BSquareEatery() {
                   <div className="flex justify-between items-center mb-5">
                     <div>
                       <p className="text-sm text-gray-600">Total ({getTotalItems} items)</p>
-                      <p className="text-4xl font-black bg-linear-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                      <p className="text-4xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                         ${getTotal}
                       </p>
                     </div>
@@ -908,7 +871,7 @@ export default function BSquareEatery() {
                   <button 
                     onClick={handleCheckout} 
                     disabled={isCheckoutDisabled}
-                    className="w-full py-5 bg-linear-to-r from-orange-500 via-red-500 to-pink-500 text-white rounded-2xl font-black text-xl hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                    className="w-full py-5 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white rounded-2xl font-black text-xl hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                   >
                     {checkoutStep === 3 ? '🎉 Place Order' : 'Continue'}
                     <ChevronRight size={24} />

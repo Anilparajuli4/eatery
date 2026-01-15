@@ -1,3 +1,4 @@
+'use client'
 import  { useState, useEffect, useMemo, useCallback } from 'react';
 import { ShoppingCart, X, Clock, MapPin, Phone, Search, Plus, Minus, Trash2, ChevronRight, Check, Menu, Star, Heart, ArrowLeft, AlertCircle, Sparkles } from 'lucide-react';
 

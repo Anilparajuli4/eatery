@@ -8,6 +8,7 @@ export interface MenuItem {
     prepTime?: number;
     isPopular?: boolean;
     isNew?: boolean;
+    image?: string;
 }
 
 export interface CartItem extends MenuItem {
@@ -19,8 +20,10 @@ export interface OrderDetails {
     name: string;
     phone: string;
     pickupTime: string;
+    pickupTime: string;
     instructions: string;
     paymentMethod: 'card' | 'cash';
+    address: string;
 }
 
 export interface Order {

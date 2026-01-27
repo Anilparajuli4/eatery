@@ -10,6 +10,7 @@ import AboutSection from '@/components/user/AboutSection';
 import OrderHistory from '@/components/user/OrderHistory';
 import CartSidebar from '@/components/user/CartSidebar';
 import ItemModal from '@/components/user/ItemModal';
+import PaymentProcess from '@/components/payment/PaymentProcess';
 
 const STORAGE_KEYS = {
     CART: 'bsquare-cart',
@@ -32,7 +33,8 @@ export default function BSquareEatery() {
         phone: '',
         pickupTime: 'asap',
         instructions: '',
-        paymentMethod: 'card'
+        paymentMethod: 'card',
+        address: ''
     });
     const [orderHistory, setOrderHistory] = useState<Order[]>([]);
     const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
@@ -157,10 +159,12 @@ export default function BSquareEatery() {
         return items;
     }, [selectedCategory, searchQuery, getAllItems, menuItems]);
 
+    const [clientSecret, setClientSecret] = useState('');
+    const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
+
     const handleCheckout = useCallback(async () => {
         if (checkoutStep === 3) {
             try {
-                // Prepare payload
                 const payload = {
                     items: cart.map(item => ({
                         productId: item.id,
@@ -168,23 +172,18 @@ export default function BSquareEatery() {
                     }))
                 };
 
-                await import('@/lib/api').then(m => m.default.post('/orders', payload));
+                const { data } = await import('@/lib/api').then(m => m.default.post('/orders', payload));
 
-                setOrderPlaced(true);
-                setTimeout(() => {
-                    setCart([]);
-                    setShowCart(false);
-                    setCheckoutStep(1);
-                    setOrderPlaced(false);
-                    setCurrentPage('home');
-                    setOrderDetails({
-                        name: '',
-                        phone: '',
-                        pickupTime: 'asap',
-                        instructions: '',
-                        paymentMethod: 'card'
-                    });
-                }, 4000);
+                // data contains { order, clientSecret }
+                if (data.clientSecret) {
+                    setClientSecret(data.clientSecret);
+                    setCurrentOrderId(data.order.id);
+                    // PaymentProcess modal will show up because clientSecret is set
+                } else {
+                    // Fallback for non-payment orders (if any) or error
+                    alert("Order created but no payment intent returned.");
+                }
+
             } catch (error) {
                 console.error("Checkout failed", error);
                 alert("Failed to place order. Please try again.");
@@ -193,6 +192,27 @@ export default function BSquareEatery() {
             setCheckoutStep(prev => prev + 1);
         }
     }, [checkoutStep, cart, orderDetails]);
+
+    const handlePaymentSuccess = () => {
+        setClientSecret('');
+        setCurrentOrderId(null);
+        setOrderPlaced(true);
+        setTimeout(() => {
+            setCart([]);
+            setShowCart(false);
+            setCheckoutStep(1);
+            setOrderPlaced(false);
+            setCurrentPage('home');
+            setOrderDetails({
+                name: '',
+                phone: '',
+                pickupTime: 'asap',
+                instructions: '',
+                paymentMethod: 'card',
+                address: ''
+            });
+        }, 4000);
+    };
 
     // Fetch Order History & Socket Setup
     useEffect(() => {
@@ -302,6 +322,18 @@ export default function BSquareEatery() {
                 toggleFavorite={toggleFavorite}
                 addToCart={addToCart}
             />
+
+            {clientSecret && currentOrderId && (
+                <PaymentProcess
+                    clientSecret={clientSecret}
+                    orderId={currentOrderId}
+                    amount={Number(getTotal)}
+                    customerName={orderDetails.name}
+                    customerAddress={orderDetails.address}
+                    onSuccess={handlePaymentSuccess}
+                    onCancel={() => setClientSecret('')}
+                />
+            )}
         </div>
     );
 }

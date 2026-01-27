@@ -1,6 +1,19 @@
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/lib/api';
 
 export default function AdminDashboard() {
+    const { data: stats, isLoading, error } = useQuery({
+        queryKey: ['adminStats'],
+        queryFn: async () => {
+            const { data } = await api.get('/stats');
+            return data;
+        }
+    });
+
+    if (isLoading) return <div className="p-8 text-center text-gray-500 font-bold">Loading dashboard stats...</div>;
+    if (error) return <div className="p-8 text-center text-red-500 font-bold">Failed to load stats</div>;
+
     return (
         <div className="space-y-6">
             {/* Stats Cards */}
@@ -8,9 +21,9 @@ export default function AdminDashboard() {
                 <div className="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-green-500">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-gray-500 text-sm font-semibold">Today's Revenue</p>
-                            <p className="text-3xl font-black text-gray-800 mt-2">$1,247.50</p>
-                            <p className="text-green-600 text-sm font-bold mt-2">↑ 12.5% vs yesterday</p>
+                            <p className="text-gray-500 text-sm font-semibold">Total Revenue</p>
+                            <p className="text-3xl font-black text-gray-800 mt-2">${stats.revenue.toFixed(2)}</p>
+                            {/* <p className="text-green-600 text-sm font-bold mt-2">↑ 12.5% vs yesterday</p> */}
                         </div>
                         <div className="text-5xl">💰</div>
                     </div>
@@ -20,8 +33,8 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm font-semibold">Total Orders</p>
-                            <p className="text-3xl font-black text-gray-800 mt-2">87</p>
-                            <p className="text-blue-600 text-sm font-bold mt-2">23 pending</p>
+                            <p className="text-3xl font-black text-gray-800 mt-2">{stats.totalOrders}</p>
+                            <p className="text-blue-600 text-sm font-bold mt-2">{stats.pendingOrders} pending</p>
                         </div>
                         <div className="text-5xl">📦</div>
                     </div>
@@ -31,8 +44,8 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm font-semibold">Avg Order Value</p>
-                            <p className="text-3xl font-black text-gray-800 mt-2">$14.34</p>
-                            <p className="text-purple-600 text-sm font-bold mt-2">↑ 5.2% this week</p>
+                            <p className="text-3xl font-black text-gray-800 mt-2">${stats.avgOrderValue.toFixed(2)}</p>
+                            {/* <p className="text-purple-600 text-sm font-bold mt-2">↑ 5.2% this week</p> */}
                         </div>
                         <div className="text-5xl">💵</div>
                     </div>
@@ -42,8 +55,8 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-gray-500 text-sm font-semibold">Menu Items</p>
-                            <p className="text-3xl font-black text-gray-800 mt-2">26</p>
-                            <p className="text-orange-600 text-sm font-bold mt-2">3 new this month</p>
+                            <p className="text-3xl font-black text-gray-800 mt-2">{stats.menuItems}</p>
+                            <p className="text-orange-600 text-sm font-bold mt-2">{stats.newMenuItems} new this month</p>
                         </div>
                         <div className="text-5xl">🍔</div>
                     </div>
@@ -54,30 +67,28 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Sales Chart */}
                 <div className="bg-white rounded-2xl p-6 shadow-lg">
-                    <h3 className="text-xl font-black text-gray-800 mb-6">Weekly Sales</h3>
+                    <h3 className="text-xl font-black text-gray-800 mb-6">Weekly Turnovers</h3>
                     <div className="space-y-4">
-                        {[
-                            { day: 'Mon', amount: 980, percentage: 70 },
-                            { day: 'Tue', amount: 1150, percentage: 82 },
-                            { day: 'Wed', amount: 890, percentage: 63 },
-                            { day: 'Thu', amount: 1340, percentage: 96 },
-                            { day: 'Fri', amount: 1580, percentage: 100 },
-                            { day: 'Sat', amount: 1420, percentage: 90 },
-                            { day: 'Sun', amount: 1247, percentage: 79 }
-                        ].map(item => (
-                            <div key={item.day}>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="font-bold text-gray-700">{item.day}</span>
-                                    <span className="font-black text-gray-800">${item.amount}</span>
+                        {stats.weeklySales.map((item: any) => {
+                            // simplistic max value for bar scaling, aiming for ~1000ish as max or max of dataset
+                            const max = Math.max(...stats.weeklySales.map((s: any) => s.amount), 100);
+                            const percentage = Math.min((item.amount / max) * 100, 100);
+
+                            return (
+                                <div key={item.day}>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="font-bold text-gray-700">{item.day}</span>
+                                        <span className="font-black text-gray-800">${item.amount.toFixed(2)}</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-3">
+                                        <div
+                                            className="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded-full transition-all duration-500"
+                                            style={{ width: `${percentage}%` }}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="w-full bg-gray-200 rounded-full h-3">
-                                    <div
-                                        className="bg-gradient-to-r from-orange-500 to-red-500 h-3 rounded-full transition-all duration-500"
-                                        style={{ width: `${item.percentage}%` }}
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                            )
+                        })}
                     </div>
                 </div>
 
@@ -85,21 +96,15 @@ export default function AdminDashboard() {
                 <div className="bg-white rounded-2xl p-6 shadow-lg">
                     <h3 className="text-xl font-black text-gray-800 mb-6">Top Selling Items</h3>
                     <div className="space-y-4">
-                        {[
-                            { name: 'BSquare Crunch', sold: 156, revenue: 2262, emoji: '🍔' },
-                            { name: 'Southern Heat', sold: 134, revenue: 1809, emoji: '🍗' },
-                            { name: 'Smash Cheese Burger', sold: 128, revenue: 1280, emoji: '🍔' },
-                            { name: 'Cheese Loaded Fries', sold: 98, revenue: 1176, emoji: '🍟' },
-                            { name: 'Calamari Crunch', sold: 87, revenue: 1261, emoji: '🐟' }
-                        ].map((item, index) => (
+                        {stats.topSellingItems.map((item: any, index: number) => (
                             <div key={item.name} className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                                <div className="text-3xl">{item.emoji}</div>
+                                {/* <div className="text-3xl">{item.emoji}</div> */}
                                 <div className="flex-1">
                                     <p className="font-bold text-gray-800">{item.name}</p>
                                     <p className="text-sm text-gray-500">{item.sold} sold</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-black text-green-600">${item.revenue}</p>
+                                    <p className="font-black text-green-600">${item.revenue.toFixed(2)}</p>
                                     <p className="text-xs text-gray-400">#{index + 1}</p>
                                 </div>
                             </div>
@@ -117,34 +122,28 @@ export default function AdminDashboard() {
                             <tr className="border-b-2 border-gray-200">
                                 <th className="text-left py-4 px-4 font-black text-gray-600">Order ID</th>
                                 <th className="text-left py-4 px-4 font-black text-gray-600">Customer</th>
-                                <th className="text-left py-4 px-4 font-black text-gray-600">Items</th>
+                                {/* <th className="text-left py-4 px-4 font-black text-gray-600">Items</th> */}
                                 <th className="text-left py-4 px-4 font-black text-gray-600">Total</th>
                                 <th className="text-left py-4 px-4 font-black text-gray-600">Status</th>
                                 <th className="text-left py-4 px-4 font-black text-gray-600">Time</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {[
-                                { id: 'BS1234', customer: 'John Smith', items: 3, total: 42.50, status: 'completed', time: '10 mins ago' },
-                                { id: 'BS1235', customer: 'Sarah Johnson', items: 2, total: 28.00, status: 'preparing', time: '15 mins ago' },
-                                { id: 'BS1236', customer: 'Mike Davis', items: 5, total: 67.50, status: 'pending', time: '18 mins ago' },
-                                { id: 'BS1237', customer: 'Emily Brown', items: 1, total: 14.50, status: 'completed', time: '25 mins ago' },
-                                { id: 'BS1238', customer: 'David Wilson', items: 4, total: 55.00, status: 'preparing', time: '32 mins ago' }
-                            ].map(order => (
+                            {stats.recentOrders.map((order: any) => (
                                 <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                    <td className="py-4 px-4 font-bold text-gray-800">{order.id}</td>
-                                    <td className="py-4 px-4 text-gray-700">{order.customer}</td>
-                                    <td className="py-4 px-4 text-gray-700">{order.items} items</td>
+                                    <td className="py-4 px-4 font-bold text-gray-800">#{order.id}</td>
+                                    <td className="py-4 px-4 text-gray-700">{order.user?.name || order.user?.email || 'Guest'}</td>
+                                    {/* <td className="py-4 px-4 text-gray-700">{order.items} items</td> */}
                                     <td className="py-4 px-4 font-bold text-gray-800">${order.total.toFixed(2)}</td>
                                     <td className="py-4 px-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${order.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                order.status === 'preparing' ? 'bg-blue-100 text-blue-700' :
-                                                    'bg-yellow-100 text-yellow-700'
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${order.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                                            order.status === 'PREPARING' ? 'bg-blue-100 text-blue-700' :
+                                                'bg-yellow-100 text-yellow-700'
                                             }`}>
-                                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                                            {order.status}
                                         </span>
                                     </td>
-                                    <td className="py-4 px-4 text-gray-500 text-sm">{order.time}</td>
+                                    <td className="py-4 px-4 text-gray-500 text-sm">{new Date(order.createdAt).toLocaleTimeString()}</td>
                                 </tr>
                             ))}
                         </tbody>

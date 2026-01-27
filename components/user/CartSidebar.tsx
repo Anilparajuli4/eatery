@@ -166,6 +166,17 @@ export default function CartSidebar({
                                             />
                                         </div>
                                         <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Full Address *</label>
+                                            <input
+                                                type="text"
+                                                placeholder="123 Main St, City, Country"
+                                                value={orderDetails.address}
+                                                onChange={e => setOrderDetails({ ...orderDetails, address: e.target.value })}
+                                                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none transition-colors"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
                                             <label className="block text-sm font-bold text-gray-700 mb-2">Pickup Time</label>
                                             <select
                                                 value={orderDetails.pickupTime}
@@ -197,8 +208,8 @@ export default function CartSidebar({
                                         <button
                                             onClick={() => setOrderDetails({ ...orderDetails, paymentMethod: 'card' })}
                                             className={`w-full p-5 border-2 rounded-2xl font-semibold flex items-center justify-between transition-all ${orderDetails.paymentMethod === 'card'
-                                                    ? 'border-orange-500 bg-orange-50'
-                                                    : 'border-gray-200 hover:border-orange-300'
+                                                ? 'border-orange-500 bg-orange-50'
+                                                : 'border-gray-200 hover:border-orange-300'
                                                 }`}
                                         >
                                             <span className="flex items-center gap-3">
@@ -215,8 +226,8 @@ export default function CartSidebar({
                                         <button
                                             onClick={() => setOrderDetails({ ...orderDetails, paymentMethod: 'cash' })}
                                             className={`w-full p-5 border-2 rounded-2xl font-semibold flex items-center justify-between transition-all ${orderDetails.paymentMethod === 'cash'
-                                                    ? 'border-orange-500 bg-orange-50'
-                                                    : 'border-gray-200 hover:border-orange-300'
+                                                ? 'border-orange-500 bg-orange-50'
+                                                : 'border-gray-200 hover:border-orange-300'
                                                 }`}
                                         >
                                             <span className="flex items-center gap-3">

@@ -8,7 +8,8 @@ interface User {
     id: number;
     name: string;
     email: string;
-    role: 'USER' | 'ADMIN';
+    role: 'USER' | 'ADMIN' | 'STAFF';
+
 }
 
 interface AuthContextType {
@@ -29,14 +30,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const savedUser = localStorage.getItem('user');
 
         if (token && savedUser) {
-            const parsedUser = JSON.parse(savedUser);
-            setUser(parsedUser);
-            socket.connect();
-            if (parsedUser.role === 'ADMIN') {
-                socket.emit('join_admin_room');
+            try {
+                const parsedUser = JSON.parse(savedUser);
+                setUser(parsedUser);
+                socket.connect();
+
+                // Join rooms based on role
+                if (parsedUser.role === 'ADMIN') {
+                    socket.emit('join_admin_room');
+                }
+                if (parsedUser.role === 'STAFF' || parsedUser.role === 'ADMIN') {
+                    socket.emit('join_staff_room');
+                }
+                socket.emit('join_user_room', parsedUser.id);
+            } catch (e) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
             }
         }
         setIsLoading(false);
+
+        // Global API interceptor for Auth errors
+        const interceptor = api.interceptors.response.use(
+            (response) => response,
+            (error) => {
+                if (error.status === 401 || error.status === 403) {
+                    logout();
+                }
+                return Promise.reject(error);
+            }
+        );
+
+        return () => {
+            api.interceptors.response.eject(interceptor);
+        };
     }, []);
 
     const login = (token: string, user: User) => {
@@ -44,9 +71,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('user', JSON.stringify(user));
         setUser(user);
         socket.connect();
+
         if (user.role === 'ADMIN') {
             socket.emit('join_admin_room');
         }
+        if (user.role === 'STAFF' || user.role === 'ADMIN') {
+            socket.emit('join_staff_room');
+        }
+        socket.emit('join_user_room', user.id);
     };
 
     const logout = () => {

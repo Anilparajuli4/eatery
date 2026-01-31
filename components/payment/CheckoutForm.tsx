@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { useMutation } from '@tanstack/react-query';
 import api from '@/lib/api';
+import { useToast } from '@/context/ToastContext';
 
 interface CheckoutFormProps {
     orderId: number;
@@ -16,6 +17,7 @@ interface CheckoutFormProps {
 export default function CheckoutForm({ orderId, amount, customerName, customerAddress, onSuccess }: CheckoutFormProps) {
     const stripe = useStripe();
     const elements = useElements();
+    const { showToast } = useToast();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -53,11 +55,12 @@ export default function CheckoutForm({ orderId, amount, customerName, customerAd
             // 2. Verify with Backend
             try {
                 await api.post(`/orders/${orderId}/verify-payment`);
-                // onSuccess(); // Old handler
-                window.location.href = '/payment-success'; // Hard redirect to ensure full state reset/clean view
-            } catch (err) {
-                console.error("Verification failed", err);
-                setErrorMessage("Payment successful but verification failed. Please contact support.");
+                showToast('Payment successful! Redirecting you...', 'success');
+                window.location.href = '/payment-success';
+            } catch (err: any) {
+                const msg = err.message || "Payment successful but verification failed. Please contact support.";
+                setErrorMessage(msg);
+                showToast(msg, 'error');
             }
             setIsProcessing(false);
         } else {

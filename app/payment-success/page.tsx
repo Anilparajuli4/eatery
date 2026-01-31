@@ -1,18 +1,17 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Check, Home } from 'lucide-react';
+import { Check } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 
-export default function PaymentSuccessPage() {
-    const router = useRouter();
+function PaymentSuccessContent() {
     const searchParams = useSearchParams();
     const { user } = useAuth();
 
     // We can get payment_intent_client_secret from URL if redirected
-    const paymentIntentClientSecret = searchParams.get('payment_intent_client_secret');
+    // const paymentIntentClientSecret = searchParams.get('payment_intent_client_secret');
 
     return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -43,5 +42,17 @@ export default function PaymentSuccessPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function PaymentSuccessPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
+            </div>
+        }>
+            <PaymentSuccessContent />
+        </Suspense>
     );
 }

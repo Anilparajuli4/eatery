@@ -10,6 +10,7 @@ import AboutSection from '@/components/user/AboutSection';
 import OrderHistory from '@/components/user/OrderHistory';
 import CartSidebar from '@/components/user/CartSidebar';
 import ItemModal from '@/components/user/ItemModal';
+import { useAuth } from '@/context/AuthContext';
 import PaymentProcess from '@/components/payment/PaymentProcess';
 
 const STORAGE_KEYS = {
@@ -19,6 +20,7 @@ const STORAGE_KEYS = {
 } as const;
 
 export default function BSquareEatery() {
+    const { logout } = useAuth();
     const [currentPage, setCurrentPage] = useState<PageType>('home');
     const [cart, setCart] = useState<CartItem[]>([]);
     const [favorites, setFavorites] = useState<number[]>([]);
@@ -100,10 +102,12 @@ export default function BSquareEatery() {
     }, [cart]);
 
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+    const [isMenuLoading, setIsMenuLoading] = useState(true);
 
     // Fetch Menu Items
     useEffect(() => {
         const fetchMenu = async () => {
+            setIsMenuLoading(true);
             try {
                 // Determine if we should mock for now or fetch
                 // For integration, we try fetch, fallback to empty or handle error
@@ -113,6 +117,8 @@ export default function BSquareEatery() {
                 console.error("Failed to fetch menu", error);
                 // Fallback to static data if API fails (optional, for safety during transition)
                 setMenuItems(Object.values(MENU_DATA).flat());
+            } finally {
+                setIsMenuLoading(false);
             }
         };
         fetchMenu();
@@ -161,15 +167,20 @@ export default function BSquareEatery() {
 
     const [clientSecret, setClientSecret] = useState('');
     const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
+    const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
     const handleCheckout = useCallback(async () => {
         if (checkoutStep === 3) {
+            setIsPaymentLoading(true);
             try {
                 const payload = {
                     items: cart.map(item => ({
                         productId: item.id,
                         quantity: item.quantity
-                    }))
+                    })),
+                    customerName: orderDetails.name,
+                    customerPhone: orderDetails.phone,
+                    customerAddress: orderDetails.address
                 };
 
                 const { data } = await import('@/lib/api').then(m => m.default.post('/orders', payload));
@@ -184,9 +195,12 @@ export default function BSquareEatery() {
                     alert("Order created but no payment intent returned.");
                 }
 
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Checkout failed", error);
-                alert("Failed to place order. Please try again.");
+                const msg = error.message || "Failed to place order. Please try again.";
+                alert(msg);
+            } finally {
+                setIsPaymentLoading(false);
             }
         } else {
             setCheckoutStep(prev => prev + 1);
@@ -218,36 +232,48 @@ export default function BSquareEatery() {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                // Only fetch if we have a way to identify user (e.g., token).
-                // If no auth, maybe we don't fetch or we fetch from local for guest?
-                // Since we implemented AuthContext, we SHOULD rely on it, but here we are in Page.tsx.
-                // For simplicity in this refactor, let's assume we try to fetch if token exists.
                 const token = localStorage.getItem('token');
                 if (token) {
                     const { data } = await import('@/lib/api').then(m => m.default.get('/orders'));
                     setOrderHistory(data);
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Failed to fetch orders", error);
+                // 401 is now handled globally in AuthContext
             }
         };
 
         fetchOrders();
 
-        // Socket Listeners
+        // Socket Setup
         const socket = require('@/lib/socket').default;
         socket.connect();
 
+        const token = localStorage.getItem('token');
+        const userJson = localStorage.getItem('user');
+        if (token && userJson) {
+            try {
+                const userData = JSON.parse(userJson);
+                socket.emit('join_user_room', userData.id);
+            } catch (e) {
+                console.error("Failed to parse user data", e);
+            }
+        }
+
         const handleStatusUpdate = (updatedOrder: any) => {
-            setOrderHistory(prev => prev.map(o => o.id === updatedOrder.id ? updatedOrder : o));
+            setOrderHistory(prev => {
+                const exists = prev.find(o => o.id === updatedOrder.id);
+                if (exists) {
+                    return prev.map(o => o.id === updatedOrder.id ? updatedOrder : o);
+                }
+                return [updatedOrder, ...prev];
+            });
         };
 
-        // In a real app, join a user-specific room.
-        // socket.emit('join_user_room', userId);
-        // socket.on('order_status', handleStatusUpdate);
+        socket.on('order_status_update', handleStatusUpdate);
 
         return () => {
-            socket.off('order_status', handleStatusUpdate);
+            socket.off('order_status_update', handleStatusUpdate);
         };
     }, []);
 
@@ -256,7 +282,11 @@ export default function BSquareEatery() {
         setShowItemModal(true);
     }, []);
 
-    const isCheckoutDisabled = checkoutStep === 2 && (!orderDetails.name.trim() || !orderDetails.phone.trim());
+    const isPhoneValid = useMemo(() => /^[0-9]{10}$/.test(orderDetails.phone.trim()), [orderDetails.phone]);
+    const isAddressValid = useMemo(() => orderDetails.address.trim().split(/\s+/).filter(word => word.length > 0).length >= 2, [orderDetails.address]);
+    const isNameValid = useMemo(() => orderDetails.name.trim().length >= 1, [orderDetails.name]);
+
+    const isCheckoutDisabled = checkoutStep === 2 && (!isNameValid || !isPhoneValid || !isAddressValid);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
@@ -283,6 +313,7 @@ export default function BSquareEatery() {
                     favorites={favorites}
                     toggleFavorite={toggleFavorite}
                     addToCart={addToCart}
+                    isLoading={isMenuLoading}
                 />
             )}
 
@@ -311,7 +342,10 @@ export default function BSquareEatery() {
                 getTotalItems={getTotalItems}
                 getTotal={getTotal}
                 handleCheckout={handleCheckout}
-                isCheckoutDisabled={isCheckoutDisabled}
+                isCheckoutDisabled={isCheckoutDisabled || isPaymentLoading}
+                isPaymentLoading={isPaymentLoading}
+                isPhoneValid={isPhoneValid}
+                isAddressValid={isAddressValid}
             />
 
             <ItemModal

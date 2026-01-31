@@ -22,6 +22,9 @@ interface CartSidebarProps {
     getTotal: string;
     handleCheckout: () => void;
     isCheckoutDisabled: boolean;
+    isPaymentLoading: boolean;
+    isPhoneValid: boolean;
+    isAddressValid: boolean;
 }
 
 export default function CartSidebar({
@@ -40,7 +43,10 @@ export default function CartSidebar({
     getTotalItems,
     getTotal,
     handleCheckout,
-    isCheckoutDisabled
+    isCheckoutDisabled,
+    isPaymentLoading,
+    isPhoneValid,
+    isAddressValid
 }: CartSidebarProps) {
     return (
         <div className={`fixed inset-0 z-50 ${showCart ? '' : 'pointer-events-none'}`}>
@@ -150,31 +156,42 @@ export default function CartSidebar({
                                                 placeholder="John Doe"
                                                 value={orderDetails.name}
                                                 onChange={e => setOrderDetails({ ...orderDetails, name: e.target.value })}
-                                                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none transition-colors"
+                                                className={`w-full p-4 border-2 rounded-xl outline-none transition-colors ${orderDetails.name.trim().length === 0 ? 'border-gray-200' : 'border-green-200'}`}
                                                 required
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number *</label>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number (10 digits) *</label>
                                             <input
                                                 type="tel"
-                                                placeholder="+1 234 567 8900"
+                                                placeholder="1234567890"
+                                                maxLength={10}
                                                 value={orderDetails.phone}
-                                                onChange={e => setOrderDetails({ ...orderDetails, phone: e.target.value })}
-                                                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none transition-colors"
+                                                onChange={e => setOrderDetails({ ...orderDetails, phone: e.target.value.replace(/[^0-9]/g, '') })}
+                                                className={`w-full p-4 border-2 rounded-xl outline-none transition-colors ${orderDetails.phone.length > 0 && !isPhoneValid ? 'border-red-400 bg-red-50' :
+                                                        isPhoneValid ? 'border-green-400' : 'border-gray-200'
+                                                    }`}
                                                 required
                                             />
+                                            {orderDetails.phone.length > 0 && !isPhoneValid && (
+                                                <p className="text-red-500 text-xs font-bold mt-1">Must be exactly 10 digits</p>
+                                            )}
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">Full Address *</label>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Full Address (Street, City, etc) *</label>
                                             <input
                                                 type="text"
-                                                placeholder="123 Main St, City, Country"
+                                                placeholder="123 Main St, City"
                                                 value={orderDetails.address}
                                                 onChange={e => setOrderDetails({ ...orderDetails, address: e.target.value })}
-                                                className="w-full p-4 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none transition-colors"
+                                                className={`w-full p-4 border-2 rounded-xl outline-none transition-colors ${orderDetails.address.length > 0 && !isAddressValid ? 'border-red-400 bg-red-50' :
+                                                        isAddressValid ? 'border-green-400' : 'border-gray-200'
+                                                    }`}
                                                 required
                                             />
+                                            {orderDetails.address.length > 0 && !isAddressValid && (
+                                                <p className="text-red-500 text-xs font-bold mt-1">Please provide a complete address (minimum 2 words)</p>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="block text-sm font-bold text-gray-700 mb-2">Pickup Time</label>
@@ -278,11 +295,20 @@ export default function CartSidebar({
 
                                 <button
                                     onClick={handleCheckout}
-                                    disabled={isCheckoutDisabled}
+                                    disabled={isCheckoutDisabled || isPaymentLoading}
                                     className="w-full py-5 bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 text-white rounded-2xl font-black text-xl hover:shadow-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                                 >
-                                    {checkoutStep === 3 ? '🎉 Place Order' : 'Continue'}
-                                    <ChevronRight size={24} />
+                                    {isPaymentLoading ? (
+                                        <>
+                                            <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Initializing Payment...
+                                        </>
+                                    ) : (
+                                        <>
+                                            {checkoutStep === 3 ? '🎉 Place Order' : 'Continue'}
+                                            <ChevronRight size={24} />
+                                        </>
+                                    )}
                                 </button>
 
                                 <p className="text-center text-xs text-gray-500 mt-3">

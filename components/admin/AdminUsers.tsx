@@ -133,12 +133,14 @@ export default function AdminUsers() {
                                 <label className="block font-bold text-gray-700 mb-2">Role</label>
                                 <select
                                     value={editingUser.role}
-                                    onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as 'USER' | 'ADMIN' })}
+                                    onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
                                     className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none"
                                 >
                                     <option value="USER">USER</option>
+                                    <option value="STAFF">STAFF</option>
                                     <option value="ADMIN">ADMIN</option>
                                 </select>
+
                             </div>
 
                             <div className="flex gap-4 mt-6">

@@ -4,15 +4,30 @@ import React, { useState } from 'react';
 import { Plus, Star, Clock, X, Upload } from 'lucide-react';
 import { getItemEmoji } from '@/lib/utils';
 import { MenuItem } from '@/types';
+import { getMediaUrl } from '@/lib/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
+import Skeleton from '../ui/Skeleton';
+import { useToast } from '@/context/ToastContext';
+import { z } from 'zod';
+
+const menuItemSchema = z.object({
+    name: z.string().min(1, 'Item name is required'),
+    description: z.string().min(1, 'Description is required'),
+    price: z.number().positive('Price must be greater than zero'),
+    prepTime: z.number().int().positive('Prep time must be a positive integer'),
+    category: z.string().min(1, 'Category is required'),
+});
 
 export default function AdminMenu() {
     const queryClient = useQueryClient();
+    const { showToast } = useToast();
     const [stats, setStats] = useState<any>(null); // To store stats if needed, or remove if not used here
     const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
     const [showAddItemModal, setShowAddItemModal] = useState(false);
     const [imageFile, setImageFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
     const [newItem, setNewItem] = useState<Partial<MenuItem>>({
         name: '',
         price: 0,
@@ -24,7 +39,7 @@ export default function AdminMenu() {
     });
 
     // Fetch Menu Items
-    const { data: menuItems = [] } = useQuery({
+    const { data: menuItems = [], isLoading } = useQuery({
         queryKey: ['products'],
         queryFn: async () => {
             const { data } = await api.get('/products');
@@ -40,6 +55,7 @@ export default function AdminMenu() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
             setShowAddItemModal(false);
+            showToast('Item added to menu successfully', 'success');
             setNewItem({
                 name: '',
                 price: 0,
@@ -50,6 +66,8 @@ export default function AdminMenu() {
                 image: ''
             });
             setImageFile(null);
+            setPreviewUrl(null);
+            setValidationErrors({});
         }
     });
 
@@ -61,6 +79,9 @@ export default function AdminMenu() {
             queryClient.invalidateQueries({ queryKey: ['products'] });
             setEditingItem(null);
             setImageFile(null);
+            setPreviewUrl(null);
+            setValidationErrors({});
+            showToast('Item updated successfully', 'success');
         }
     });
 
@@ -70,6 +91,7 @@ export default function AdminMenu() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['products'] });
+            showToast('Item deleted successfully', 'success');
         }
     });
 
@@ -83,12 +105,37 @@ export default function AdminMenu() {
             return data.filePath;
         } catch (error) {
             console.error('Image upload failed', error);
-            alert('Image upload failed');
+            showToast('Image upload failed', 'error');
             return null;
         }
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] || null;
+        setImageFile(file);
+        if (file) {
+            const url = URL.createObjectURL(file);
+            setPreviewUrl(url);
+        } else {
+            setPreviewUrl(null);
+        }
+    };
+
     const handleCreate = async () => {
+        setValidationErrors({});
+
+        // Validation
+        const result = menuItemSchema.safeParse(newItem);
+        if (!result.success) {
+            const errors: { [key: string]: string } = {};
+            result.error.issues.forEach((issue) => {
+                errors[issue.path[0] as string] = issue.message;
+            });
+            setValidationErrors(errors);
+            showToast('Please fix the errors in the form', 'error');
+            return;
+        }
+
         let imagePath = newItem.image;
         if (imageFile) {
             const uploadedPath = await handleImageUpload(imageFile);
@@ -99,6 +146,20 @@ export default function AdminMenu() {
 
     const handleUpdate = async () => {
         if (!editingItem) return;
+        setValidationErrors({});
+
+        // Validation
+        const result = menuItemSchema.safeParse(editingItem);
+        if (!result.success) {
+            const errors: { [key: string]: string } = {};
+            result.error.issues.forEach((issue) => {
+                errors[issue.path[0] as string] = issue.message;
+            });
+            setValidationErrors(errors);
+            showToast('Please fix the errors in the form', 'error');
+            return;
+        }
+
         let imagePath = editingItem.image;
         if (imageFile) {
             const uploadedPath = await handleImageUpload(imageFile);
@@ -137,7 +198,32 @@ export default function AdminMenu() {
             </div>
 
             {/* Menu Items Grid */}
-            {Object.entries(groupedItems).map(([category, items]) => (
+            {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="bg-white rounded-xl p-4 shadow-md border-2 border-gray-100">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="space-y-2 flex-1">
+                                    <Skeleton className="h-5 w-3/4" />
+                                    <Skeleton className="h-4 w-full" />
+                                </div>
+                                <Skeleton className="w-16 h-16 rounded-lg ml-2" />
+                            </div>
+                            <div className="flex gap-2 mb-3">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-4 w-12" />
+                            </div>
+                            <div className="flex justify-between mt-4">
+                                <Skeleton className="h-8 w-20" />
+                                <div className="flex gap-2">
+                                    <Skeleton className="h-9 w-16" />
+                                    <Skeleton className="h-9 w-16" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : Object.entries(groupedItems).map(([category, items]) => (
                 <div key={category} className="bg-white rounded-2xl p-6 shadow-lg">
                     <h3 className="text-xl font-black text-gray-800 mb-4 capitalize">
                         {category.replace(/_/g, ' ')}
@@ -151,7 +237,11 @@ export default function AdminMenu() {
                                         <p className="text-sm text-gray-500 mt-1">{item.description}</p>
                                     </div>
                                     {item.image ? (
-                                        <img src={`http://localhost:4000${item.image}`} alt={item.name} className="w-16 h-16 object-cover rounded-lg ml-2" />
+                                        <img
+                                            src={getMediaUrl(item.image)}
+                                            alt={item.name}
+                                            className="w-16 h-16 object-cover rounded-lg ml-2"
+                                        />
                                     ) : (
                                         <span className="text-2xl ml-2">{getItemEmoji(item.category)}</span>
                                     )}
@@ -171,15 +261,22 @@ export default function AdminMenu() {
                                     <div className="flex gap-2">
                                         <button
                                             onClick={() => setEditingItem(item)}
-                                            className="px-4 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 transition-colors"
+                                            disabled={updateMutation.isPending || deleteMutation.isPending}
+                                            className="px-4 py-2 bg-blue-500 text-white rounded-lg font-bold text-sm hover:bg-blue-600 transition-colors disabled:opacity-50"
                                         >
                                             Edit
                                         </button>
                                         <button
                                             onClick={() => handleDelete(item.id)}
-                                            className="px-4 py-2 bg-red-500 text-white rounded-lg font-bold text-sm hover:bg-red-600 transition-colors"
+                                            disabled={deleteMutation.isPending && deleteMutation.variables === item.id}
+                                            className="px-4 py-2 bg-red-500 text-white rounded-lg font-bold text-sm hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center gap-1"
                                         >
-                                            Delete
+                                            {deleteMutation.isPending && deleteMutation.variables === item.id ? (
+                                                <>
+                                                    <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                    ...
+                                                </>
+                                            ) : 'Delete'}
                                         </button>
                                     </div>
                                 </div>
@@ -206,19 +303,25 @@ export default function AdminMenu() {
                                     type="text"
                                     value={newItem.name}
                                     onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none"
+                                    className={`w-full p-3 border-2 rounded-xl outline-none transition-colors ${validationErrors.name ? 'border-red-500' : 'border-gray-200 focus:border-orange-500'}`}
                                     placeholder="e.g., Deluxe Burger"
                                 />
+                                {validationErrors.name && (
+                                    <p className="mt-1 text-xs text-red-500 font-semibold">{validationErrors.name}</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block font-bold text-gray-700 mb-2">Description</label>
                                 <textarea
                                     value={newItem.description}
                                     onChange={(e) => setNewItem({ ...newItem, description: e.target.value })}
-                                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none resize-none"
+                                    className={`w-full p-3 border-2 rounded-xl outline-none transition-colors resize-none ${validationErrors.description ? 'border-red-500' : 'border-gray-200 focus:border-orange-500'}`}
                                     rows={3}
                                     placeholder="Describe the item..."
                                 />
+                                {validationErrors.description && (
+                                    <p className="mt-1 text-xs text-red-500 font-semibold">{validationErrors.description}</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block font-bold text-gray-700 mb-2">Image</label>
@@ -227,12 +330,23 @@ export default function AdminMenu() {
                                         type="file"
                                         id="imageUpload"
                                         className="hidden"
-                                        onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                                        onChange={handleFileChange}
                                         accept="image/*"
                                     />
                                     <label htmlFor="imageUpload" className="cursor-pointer flex flex-col items-center gap-2">
-                                        <Upload size={32} className="text-gray-400" />
-                                        <span className="text-gray-500 font-bold">{imageFile ? imageFile.name : "Click to upload image"}</span>
+                                        {previewUrl ? (
+                                            <div className="relative w-full aspect-video max-h-48 overflow-hidden rounded-lg border-2 border-orange-200 shadow-sm">
+                                                <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                    <span className="text-white font-bold text-sm bg-black/50 px-3 py-1 rounded-full">Change Image</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Upload size={32} className="text-gray-400" />
+                                                <span className="text-gray-500 font-bold">Click to upload image</span>
+                                            </>
+                                        )}
                                     </label>
                                 </div>
                             </div>
@@ -242,19 +356,25 @@ export default function AdminMenu() {
                                     <input
                                         type="number"
                                         value={newItem.price}
-                                        onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) })}
-                                        className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none"
+                                        onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
+                                        className={`w-full p-3 border-2 rounded-xl outline-none transition-colors ${validationErrors.price ? 'border-red-500' : 'border-gray-200 focus:border-orange-500'}`}
                                         step="0.50"
                                     />
+                                    {validationErrors.price && (
+                                        <p className="mt-1 text-xs text-red-500 font-semibold">{validationErrors.price}</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block font-bold text-gray-700 mb-2">Prep Time (mins)</label>
                                     <input
                                         type="number"
                                         value={newItem.prepTime}
-                                        onChange={(e) => setNewItem({ ...newItem, prepTime: parseInt(e.target.value) })}
-                                        className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none"
+                                        onChange={(e) => setNewItem({ ...newItem, prepTime: parseInt(e.target.value) || 0 })}
+                                        className={`w-full p-3 border-2 rounded-xl outline-none transition-colors ${validationErrors.prepTime ? 'border-red-500' : 'border-gray-200 focus:border-orange-500'}`}
                                     />
+                                    {validationErrors.prepTime && (
+                                        <p className="mt-1 text-xs text-red-500 font-semibold">{validationErrors.prepTime}</p>
+                                    )}
                                 </div>
                             </div>
                             <div>
@@ -276,9 +396,19 @@ export default function AdminMenu() {
                                 <button
                                     onClick={handleCreate}
                                     disabled={createMutation.isPending}
-                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50"
+                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                                 >
-                                    {createMutation.isPending ? 'Adding...' : 'Add Item'}
+                                    {createMutation.isPending ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Prepping Item...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Plus size={20} />
+                                            Add Item
+                                        </>
+                                    )}
                                 </button>
                                 <button onClick={() => setShowAddItemModal(false)} className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all">
                                     Cancel
@@ -306,17 +436,23 @@ export default function AdminMenu() {
                                     type="text"
                                     value={editingItem.name}
                                     onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
-                                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none"
+                                    className={`w-full p-3 border-2 rounded-xl outline-none transition-colors ${validationErrors.name ? 'border-red-500' : 'border-gray-200 focus:border-orange-500'}`}
                                 />
+                                {validationErrors.name && (
+                                    <p className="mt-1 text-xs text-red-500 font-semibold">{validationErrors.name}</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block font-bold text-gray-700 mb-2">Description</label>
                                 <textarea
                                     value={editingItem.description}
                                     onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
-                                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none resize-none"
+                                    className={`w-full p-3 border-2 rounded-xl outline-none transition-colors resize-none ${validationErrors.description ? 'border-red-500' : 'border-gray-200 focus:border-orange-500'}`}
                                     rows={3}
                                 />
+                                {validationErrors.description && (
+                                    <p className="mt-1 text-xs text-red-500 font-semibold">{validationErrors.description}</p>
+                                )}
                             </div>
                             <div>
                                 <label className="block font-bold text-gray-700 mb-2">Image</label>
@@ -325,12 +461,27 @@ export default function AdminMenu() {
                                         type="file"
                                         id="editImageUpload"
                                         className="hidden"
-                                        onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+                                        onChange={handleFileChange}
                                         accept="image/*"
                                     />
                                     <label htmlFor="editImageUpload" className="cursor-pointer flex flex-col items-center gap-2">
-                                        <Upload size={32} className="text-gray-400" />
-                                        <span className="text-gray-500 font-bold">{imageFile ? imageFile.name : "Click to change image"}</span>
+                                        {(previewUrl || (editingItem && editingItem.image)) ? (
+                                            <div className="relative w-full aspect-video max-h-48 overflow-hidden rounded-lg border-2 border-orange-200 shadow-sm">
+                                                <img
+                                                    src={previewUrl || getMediaUrl(editingItem?.image)}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                                    <span className="text-white font-bold text-sm bg-black/50 px-3 py-1 rounded-full">Change Image</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <Upload size={32} className="text-gray-400" />
+                                                <span className="text-gray-500 font-bold">Click to change image</span>
+                                            </>
+                                        )}
                                     </label>
                                 </div>
                             </div>
@@ -340,28 +491,41 @@ export default function AdminMenu() {
                                     <input
                                         type="number"
                                         value={editingItem.price}
-                                        onChange={(e) => setEditingItem({ ...editingItem, price: parseFloat(e.target.value) })}
-                                        className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none"
+                                        onChange={(e) => setEditingItem({ ...editingItem, price: parseFloat(e.target.value) || 0 })}
+                                        className={`w-full p-3 border-2 rounded-xl outline-none transition-colors ${validationErrors.price ? 'border-red-500' : 'border-gray-200 focus:border-orange-500'}`}
                                         step="0.50"
                                     />
+                                    {validationErrors.price && (
+                                        <p className="mt-1 text-xs text-red-500 font-semibold">{validationErrors.price}</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block font-bold text-gray-700 mb-2">Prep Time (mins)</label>
                                     <input
                                         type="number"
                                         value={editingItem.prepTime}
-                                        onChange={(e) => setEditingItem({ ...editingItem, prepTime: parseInt(e.target.value) })}
-                                        className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-orange-500 outline-none"
+                                        onChange={(e) => setEditingItem({ ...editingItem, prepTime: parseInt(e.target.value) || 0 })}
+                                        className={`w-full p-3 border-2 rounded-xl outline-none transition-colors ${validationErrors.prepTime ? 'border-red-500' : 'border-gray-200 focus:border-orange-500'}`}
                                     />
+                                    {validationErrors.prepTime && (
+                                        <p className="mt-1 text-xs text-red-500 font-semibold">{validationErrors.prepTime}</p>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex gap-4 mt-6">
                                 <button
                                     onClick={handleUpdate}
                                     disabled={updateMutation.isPending}
-                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50"
+                                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                                 >
-                                    {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                                    {updateMutation.isPending ? (
+                                        <>
+                                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Saving Changes...
+                                        </>
+                                    ) : (
+                                        'Save Changes'
+                                    )}
                                 </button>
                                 <button onClick={() => setEditingItem(null)} className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all">
                                     Cancel

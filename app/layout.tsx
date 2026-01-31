@@ -19,6 +19,8 @@ export const metadata: Metadata = {
 
 import Providers from "./providers";
 import { AuthProvider } from "@/context/AuthContext";
+import { ToastProvider } from "@/context/ToastContext";
+import NotificationCenter from "@/components/NotificationCenter";
 
 export default function RootLayout({
   children,
@@ -29,10 +31,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <Providers>
           <AuthProvider>
-            {children}
+            <ToastProvider>
+              <NotificationCenter />
+              {children}
+            </ToastProvider>
           </AuthProvider>
         </Providers>
       </body>

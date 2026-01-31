@@ -20,7 +20,6 @@ export interface OrderDetails {
     name: string;
     phone: string;
     pickupTime: string;
-    pickupTime: string;
     instructions: string;
     paymentMethod: 'card' | 'cash';
     address: string;
@@ -28,11 +27,14 @@ export interface OrderDetails {
 
 export interface Order {
     id: number;
-    items: CartItem[];
+    items: any[]; // Some are CartItem, some have Product relation
     total: string;
-    details: OrderDetails;
-    timestamp: string;
-    status: string;
+    customerName?: string;
+    customerPhone?: string;
+    customerAddress?: string;
+    paymentStatus?: 'PENDING' | 'PAID' | 'FAILED';
+    createdAt: string;
+    status: 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED';
 }
 
 export type PageType = 'home' | 'menu' | 'about' | 'orders';

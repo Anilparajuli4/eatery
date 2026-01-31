@@ -106,22 +106,22 @@ export default function KitchenBoard() {
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-[calc(100vh-12rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 h-full">
             {columns.map(col => (
-                <div key={col.status} className="flex flex-col gap-4 bg-slate-100/50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-800">
-                    <div className="flex items-center justify-between mb-4">
+                <div key={col.status} className="flex flex-col gap-4 bg-slate-100/50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 lg:h-[calc(100vh-14rem)]">
+                    <div className="flex items-center justify-between mb-2 shrink-0">
                         <div className="flex items-center gap-3">
                             <div className={`p-2 rounded-xl bg-white dark:bg-slate-900 shadow-sm ${col.color}`}>
                                 <col.icon size={20} />
                             </div>
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white">{col.title}</h2>
                         </div>
-                        <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-bold">
+                        <span className="bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
                             {orders.filter(o => o.status === col.status).length}
                         </span>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
+                    <div className="flex-1 lg:overflow-y-auto space-y-4 pr-1 custom-scrollbar min-h-[300px]">
                         <AnimatePresence>
                             {orders.filter(o => o.status === col.status).map(order => (
                                 <motion.div

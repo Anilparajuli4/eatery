@@ -186,11 +186,11 @@ export default function AdminMenu() {
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-3xl font-black text-gray-800">Menu Management</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-800">Menu Management</h2>
                 <button
                     onClick={() => setShowAddItemModal(true)}
-                    className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center gap-2"
+                    className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                 >
                     <Plus size={20} />
                     Add New Item
@@ -288,8 +288,8 @@ export default function AdminMenu() {
 
             {/* Add Item Modal */}
             {showAddItemModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setShowAddItemModal(false)}>
-                    <div className="bg-white rounded-2xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4" onClick={() => setShowAddItemModal(false)}>
+                    <div className="bg-white rounded-2xl max-w-2xl w-full p-4 sm:p-8 max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-black text-gray-800">Add New Menu Item</h2>
                             <button onClick={() => setShowAddItemModal(false)} className="p-2 hover:bg-gray-100 rounded-full">
@@ -421,10 +421,10 @@ export default function AdminMenu() {
 
             {/* Edit Item Modal */}
             {editingItem && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setEditingItem(null)}>
-                    <div className="bg-white rounded-2xl max-w-2xl w-full p-8 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-2 sm:p-4" onClick={() => setEditingItem(null)}>
+                    <div className="bg-white rounded-2xl max-w-2xl w-full p-4 sm:p-8 max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-black text-gray-800">Edit Menu Item</h2>
+                            <h2 className="text-xl sm:text-2xl font-black text-gray-800">Edit Menu Item</h2>
                             <button onClick={() => setEditingItem(null)} className="p-2 hover:bg-gray-100 rounded-full">
                                 <X size={24} />
                             </button>

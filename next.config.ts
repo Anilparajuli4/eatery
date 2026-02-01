@@ -1,19 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin-allow-popups',
-          },
-        ],
-      },
-    ];
-  },
+  // headers() config removed to resolve Cross-Origin-Opener-Policy blocking window.closed calls with Google Login
 };
 
 export default nextConfig;

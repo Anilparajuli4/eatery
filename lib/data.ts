@@ -43,10 +43,20 @@ export const MENU_DATA: Record<string, MenuItem[]> = {
 
 export const CATEGORIES = [
     { key: 'all' as CategoryType, label: 'All Items', emoji: '🍽️' },
-    { key: 'beefBurgers' as CategoryType, label: 'Beef Burgers', emoji: '🍔' },
-    { key: 'chickenBurgers' as CategoryType, label: 'Chicken', emoji: '🍗' },
-    { key: 'seafood' as CategoryType, label: 'Seafood', emoji: '🐟' },
-    { key: 'fries' as CategoryType, label: 'Loaded Fries', emoji: '🍟' },
-    { key: 'sides' as CategoryType, label: 'Sides', emoji: '🥤' },
-    { key: 'drinks' as CategoryType, label: 'Drinks', emoji: '🥤' }
+    { key: 'BEEF_BURGERS' as CategoryType, label: 'Beef Burgers', emoji: '🍔' },
+    { key: 'STEAK_SANDWICHES' as CategoryType, label: 'Steak Sandwiches', emoji: '🥩' },
+    { key: 'CHICKEN_BURGERS' as CategoryType, label: 'Chicken Burgers', emoji: '🍗' },
+    { key: 'FISH_BURGERS' as CategoryType, label: 'Fish Burgers', emoji: '🐟' },
+    { key: 'VEGGIE_BURGERS' as CategoryType, label: 'Veggie Burgers', emoji: '🥗' },
+    { key: 'ROLLS' as CategoryType, label: 'Rolls', emoji: '🌯' },
+    { key: 'WRAPS' as CategoryType, label: 'Wraps', emoji: '🌮' },
+    { key: 'HOT_FOOD' as CategoryType, label: 'Hot Food', emoji: '🍲' },
+    { key: 'SALADS' as CategoryType, label: 'Salads', emoji: '🥗' },
+    { key: 'SEAFOOD' as CategoryType, label: 'Seafood', emoji: '🦐' },
+    { key: 'LOADED_FRIES' as CategoryType, label: 'Loaded Fries', emoji: '🍟' },
+    { key: 'CHICKEN_WINGS' as CategoryType, label: 'Chicken Wings', emoji: '🍗' },
+    { key: 'KIDS_MENU' as CategoryType, label: 'Kids Menu', emoji: '👶' },
+    { key: 'SIDES' as CategoryType, label: 'Sides', emoji: '🥤' },
+    { key: 'MILKSHAKES' as CategoryType, label: 'Milkshakes', emoji: '🥤' },
+    { key: 'SOFT_DRINKS' as CategoryType, label: 'Soft Drinks', emoji: '🥤' }
 ] as const;

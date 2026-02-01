@@ -62,34 +62,42 @@ export default function LoginForm() {
         }
     };
 
-    const handleGoogleLogin = async () => {
-        setIsLoading(true);
-        try {
-            const api = await import('@/lib/api').then(m => m.default);
-            // In a real app, this would receive a Google ID token from a pop-up
-            const { data } = await api.post('/auth/google-login', {
-                email: 'google-user@example.com',
-                name: 'Google User',
-                idToken: 'mock-id-token'
-            });
+    const { useGoogleLogin } = require('@react-oauth/google');
 
-            login(data.token, data.user);
-            showToast(`Welcome, ${data.user.name}!`, 'success');
+    const handleGoogleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse: any) => {
+            setIsLoading(true);
+            try {
+                const api = await import('@/lib/api').then(m => m.default);
+                // The frontend receives an access token or an ID token depending on configuration.
+                // For 'Google Login' popups, we usually get a code or a token.
+                // We'll send this to the backend to exchange/verify.
+                const { data } = await api.post('/auth/google', {
+                    token: tokenResponse.access_token
+                });
 
-            if (data.user.role === 'ADMIN') {
-                router.push('/admin');
-            } else if (data.user.role === 'STAFF') {
-                router.push('/staff');
-            } else {
-                router.push('/');
+                login(data.token, data.user);
+                showToast(`Welcome, ${data.user.name}!`, 'success');
+
+                if (data.user.role === 'ADMIN') {
+                    router.push('/admin');
+                } else if (data.user.role === 'STAFF') {
+                    router.push('/staff');
+                } else {
+                    router.push('/');
+                }
+            } catch (err: any) {
+                const msg = err.response?.data?.message || err.message || 'Google login failed';
+                showToast(msg, 'error');
+            } finally {
+                setIsLoading(false);
             }
-        } catch (err: any) {
-            const msg = err.message || 'Google login failed';
-            showToast(msg, 'error');
-        } finally {
+        },
+        onError: () => {
+            showToast('Google login failed', 'error');
             setIsLoading(false);
         }
-    };
+    });
 
     return (
         <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-xl">

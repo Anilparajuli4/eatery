@@ -46,7 +46,7 @@ export default function UserNavbar({
                             <span className="text-xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                                 BSquare Eatery
                             </span>
-                            <p className="text-xs text-gray-500 font-medium">Fresh & Delicious</p>
+                            <p className="text-xs text-gray-500 font-bold">Where hunger meets flavour</p>
                         </div>
                     </button>
 

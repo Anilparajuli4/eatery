@@ -35,7 +35,7 @@ export default function HeroSection({ setCurrentPage }: HeroSectionProps) {
                 </h1>
 
                 <p className="text-3xl md:text-4xl text-white mb-4 font-bold drop-shadow-lg">
-                    Where Hunger Meets Flavor
+                    Where Hunger Meets Flavour
                 </p>
 
                 <div className="flex items-center justify-center gap-4 mb-8 flex-wrap">

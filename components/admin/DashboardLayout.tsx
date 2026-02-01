@@ -98,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="p-6 flex items-center justify-between">
                     {(!collapsed || mobileMenuOpen) && (
                         <span className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent truncate">
-                            BS Eater
+                            BSquare Eatery
                         </span>
                     )}
                     <button

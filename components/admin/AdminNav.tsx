@@ -16,7 +16,7 @@ export default function AdminNav() {
                             <h1 className="text-2xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                                 Admin Dashboard
                             </h1>
-                            <p className="text-sm text-gray-500 font-medium">BSquare Eatery Management</p>
+                            <p className="text-sm text-gray-500 font-bold">BSquare Eatery - Where hunger meets flavour</p>
                         </div>
                     </div>
                     <div className="flex gap-4">

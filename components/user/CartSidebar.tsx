@@ -113,6 +113,9 @@ export default function CartSidebar({
                                                     <div className="flex-1 min-w-0">
                                                         <h3 className="font-bold text-gray-900 text-lg mb-1 truncate">{item.name}</h3>
                                                         <p className="text-orange-600 font-black text-lg">${item.price.toFixed(2)}</p>
+                                                        {item.quantity >= item.stock && (
+                                                            <p className="text-red-500 text-xs font-bold mt-1">Max stock reached!</p>
+                                                        )}
                                                         <div className="flex items-center gap-4 mt-3">
                                                             <div className="flex items-center gap-3 bg-white rounded-full p-1 shadow-md">
                                                                 <button
@@ -125,7 +128,8 @@ export default function CartSidebar({
                                                                 <span className="font-bold text-lg px-2">{item.quantity}</span>
                                                                 <button
                                                                     onClick={() => updateQuantity(item.id, 1)}
-                                                                    className="w-8 h-8 bg-orange-500 text-white rounded-full flex items-center justify-center hover:bg-orange-600 transition-colors"
+                                                                    disabled={item.quantity >= item.stock}
+                                                                    className={`w-8 h-8 text-white rounded-full flex items-center justify-center transition-colors ${item.quantity >= item.stock ? 'bg-gray-300 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600'}`}
                                                                     aria-label="Increase quantity"
                                                                 >
                                                                     <Plus size={16} />
@@ -169,7 +173,7 @@ export default function CartSidebar({
                                                 value={orderDetails.phone}
                                                 onChange={e => setOrderDetails({ ...orderDetails, phone: e.target.value.replace(/[^0-9]/g, '') })}
                                                 className={`w-full p-4 border-2 rounded-xl outline-none transition-colors ${orderDetails.phone.length > 0 && !isPhoneValid ? 'border-red-400 bg-red-50' :
-                                                        isPhoneValid ? 'border-green-400' : 'border-gray-200'
+                                                    isPhoneValid ? 'border-green-400' : 'border-gray-200'
                                                     }`}
                                                 required
                                             />
@@ -185,7 +189,7 @@ export default function CartSidebar({
                                                 value={orderDetails.address}
                                                 onChange={e => setOrderDetails({ ...orderDetails, address: e.target.value })}
                                                 className={`w-full p-4 border-2 rounded-xl outline-none transition-colors ${orderDetails.address.length > 0 && !isAddressValid ? 'border-red-400 bg-red-50' :
-                                                        isAddressValid ? 'border-green-400' : 'border-gray-200'
+                                                    isAddressValid ? 'border-green-400' : 'border-gray-200'
                                                     }`}
                                                 required
                                             />

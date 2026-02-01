@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Search, Star, Clock, Heart, Plus, Sparkles } from 'lucide-react';
+import { Search, Star, Clock, Heart, Plus, Sparkles, AlertCircle } from 'lucide-react';
 import { CATEGORIES } from '@/lib/data';
 import { MenuItem, CategoryType } from '@/types';
 import { getItemEmoji } from '@/lib/utils';
@@ -98,7 +98,7 @@ export default function MenuSection({
                         filteredItems.map(item => (
                             <div
                                 key={item.id}
-                                className="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all hover:-translate-y-2 overflow-hidden cursor-pointer border-2 border-transparent hover:border-orange-200"
+                                className={`group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all hover:-translate-y-2 overflow-hidden cursor-pointer border-2 border-transparent hover:border-orange-200 ${!item.isAvailable || item.stock === 0 ? 'opacity-75 grayscale-[0.5]' : ''}`}
                                 onClick={() => openItemModal(item)}
                             >
                                 <div className="relative bg-gradient-to-br from-orange-400 via-red-400 to-pink-400 h-48 flex items-center justify-center overflow-hidden">
@@ -114,7 +114,16 @@ export default function MenuSection({
                                         </div>
                                     )}
 
-                                    <div className="absolute top-3 left-3 flex gap-2">
+                                    {/* Stock overlay */}
+                                    {(!item.isAvailable || item.stock === 0) && (
+                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm z-10">
+                                            <span className="px-4 py-2 bg-red-600 text-white font-black text-xl rounded-xl rotate-12 shadow-lg border-2 border-white">
+                                                SOLD OUT
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    <div className="absolute top-3 left-3 flex gap-2 z-20">
                                         {item.isPopular && (
                                             <span className="px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full flex items-center gap-1 shadow-lg">
                                                 <Star size={12} fill="white" /> Popular
@@ -129,7 +138,7 @@ export default function MenuSection({
 
                                     <button
                                         onClick={(e) => { e.stopPropagation(); toggleFavorite(item.id); }}
-                                        className="absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                                        className="absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform z-20"
                                         aria-label={favorites.includes(item.id) ? 'Remove from favorites' : 'Add to favorites'}
                                     >
                                         <Heart
@@ -150,6 +159,14 @@ export default function MenuSection({
                                         {item.description}
                                     </p>
 
+                                    {/* Low stock warning */}
+                                    {item.isAvailable && item.stock > 0 && item.stock <= 5 && (
+                                        <div className="mb-3 text-red-500 text-xs font-bold flex items-center gap-1 animate-pulse">
+                                            <AlertCircle size={12} />
+                                            Only {item.stock} left!
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center gap-4 mb-4 text-sm">
                                         <div className="flex items-center gap-1 text-yellow-500 font-semibold">
                                             <Star size={16} fill="currentColor" />
@@ -167,10 +184,20 @@ export default function MenuSection({
                                         </span>
                                         <button
                                             onClick={(e) => { e.stopPropagation(); addToCart(item); }}
-                                            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-bold hover:shadow-xl transition-all hover:scale-105 flex items-center gap-2"
+                                            disabled={!item.isAvailable || item.stock === 0}
+                                            className={`px-6 py-3 rounded-2xl font-bold transition-all flex items-center gap-2 ${!item.isAvailable || item.stock === 0
+                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:shadow-xl hover:scale-105'
+                                                }`}
                                         >
-                                            <Plus size={18} />
-                                            Add
+                                            {!item.isAvailable || item.stock === 0 ? (
+                                                'Sold Out'
+                                            ) : (
+                                                <>
+                                                    <Plus size={18} />
+                                                    Add
+                                                </>
+                                            )}
                                         </button>
                                     </div>
                                 </div>

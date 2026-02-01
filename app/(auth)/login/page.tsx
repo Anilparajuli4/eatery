@@ -8,7 +8,8 @@ export default function LoginPage() {
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
                     <Link href="/" className="inline-block text-4xl mb-4">🍔</Link>
-                    <h1 className="text-2xl font-bold text-gray-800">BSquare Eaton</h1>
+                    <h1 className="text-2xl font-black text-gray-800">BSquare Eatery</h1>
+                    <p className="text-sm text-gray-500 font-bold mt-1">Where hunger meets flavour</p>
                 </div>
                 <LoginForm />
             </div>

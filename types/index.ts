@@ -9,6 +9,8 @@ export interface MenuItem {
     isPopular?: boolean;
     isNew?: boolean;
     image?: string;
+    stock: number;
+    isAvailable: boolean;
 }
 
 export interface CartItem extends MenuItem {
@@ -38,4 +40,21 @@ export interface Order {
 }
 
 export type PageType = 'home' | 'menu' | 'about' | 'orders';
-export type CategoryType = 'all' | 'beefBurgers' | 'chickenBurgers' | 'seafood' | 'fries' | 'sides' | 'drinks';
+export type CategoryType =
+    | 'all'
+    | 'BEEF_BURGERS'
+    | 'STEAK_SANDWICHES'
+    | 'CHICKEN_BURGERS'
+    | 'FISH_BURGERS'
+    | 'VEGGIE_BURGERS'
+    | 'ROLLS'
+    | 'WRAPS'
+    | 'HOT_FOOD'
+    | 'SALADS'
+    | 'SEAFOOD'
+    | 'LOADED_FRIES'
+    | 'CHICKEN_WINGS'
+    | 'KIDS_MENU'
+    | 'SIDES'
+    | 'MILKSHAKES'
+    | 'SOFT_DRINKS';

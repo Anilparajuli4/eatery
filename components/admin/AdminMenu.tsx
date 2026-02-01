@@ -112,13 +112,33 @@ export default function AdminMenu() {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0] || null;
-        setImageFile(file);
-        if (file) {
-            const url = URL.createObjectURL(file);
-            setPreviewUrl(url);
-        } else {
+
+        if (!file) {
+            setImageFile(null);
             setPreviewUrl(null);
+            return;
         }
+
+        // Validate file size (250KB max)
+        const MAX_FILE_SIZE = 250 * 1024; // 250KB in bytes
+        if (file.size > MAX_FILE_SIZE) {
+            showToast(`File size is ${(file.size / 1024).toFixed(1)}KB. Maximum allowed is 250KB`, 'error');
+            e.target.value = ''; // Clear the input
+            return;
+        }
+
+        // Validate file format (WebP or JPEG only)
+        const allowedFormats = ['image/webp', 'image/jpeg', 'image/jpg'];
+        if (!allowedFormats.includes(file.type)) {
+            showToast('Only WebP and JPEG formats are allowed', 'error');
+            e.target.value = ''; // Clear the input
+            return;
+        }
+
+        setImageFile(file);
+        const url = URL.createObjectURL(file);
+        setPreviewUrl(url);
+        showToast(`Image selected: ${(file.size / 1024).toFixed(1)}KB`, 'success');
     };
 
     const handleCreate = async () => {
@@ -331,7 +351,7 @@ export default function AdminMenu() {
                                         id="imageUpload"
                                         className="hidden"
                                         onChange={handleFileChange}
-                                        accept="image/*"
+                                        accept="image/webp,image/jpeg,image/jpg"
                                     />
                                     <label htmlFor="imageUpload" className="cursor-pointer flex flex-col items-center gap-2">
                                         {previewUrl ? (
@@ -345,6 +365,7 @@ export default function AdminMenu() {
                                             <>
                                                 <Upload size={32} className="text-gray-400" />
                                                 <span className="text-gray-500 font-bold">Click to upload image</span>
+                                                <span className="text-xs text-gray-400 mt-1">WebP or JPEG • Max 250KB</span>
                                             </>
                                         )}
                                     </label>
@@ -462,7 +483,7 @@ export default function AdminMenu() {
                                         id="editImageUpload"
                                         className="hidden"
                                         onChange={handleFileChange}
-                                        accept="image/*"
+                                        accept="image/webp,image/jpeg,image/jpg"
                                     />
                                     <label htmlFor="editImageUpload" className="cursor-pointer flex flex-col items-center gap-2">
                                         {(previewUrl || (editingItem && editingItem.image)) ? (
@@ -480,6 +501,7 @@ export default function AdminMenu() {
                                             <>
                                                 <Upload size={32} className="text-gray-400" />
                                                 <span className="text-gray-500 font-bold">Click to change image</span>
+                                                <span className="text-xs text-gray-400 mt-1">WebP or JPEG • Max 250KB</span>
                                             </>
                                         )}
                                     </label>

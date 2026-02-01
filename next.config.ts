@@ -5,19 +5,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        source: "/:path*",
         headers: [
           {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'unsafe-none',
-          },
-          {
-            key: 'Cross-Origin-Embedder-Policy',
-            value: 'unsafe-none',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'no-referrer-when-downgrade',
+            key: "Cross-Origin-Opener-Policy",
+            value: "unsafe-none",
           },
         ],
       },

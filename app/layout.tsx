@@ -36,6 +36,18 @@ export default function RootLayout({
     console.log("Google Client ID loaded:", googleClientId);
   }
 
+  // Runtime Configuration Safety Check
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'production') {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl || apiUrl.includes('localhost')) {
+      console.warn("CRITICAL WARNING: Production build is using localhost API URL:", apiUrl);
+      console.warn("Please check NEXT_PUBLIC_API_URL in your environment variables/Vercel settings.");
+    }
+    const origin = window.location.origin;
+    console.log("App running at origin:", origin);
+    console.log("Configured API URL:", apiUrl);
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body

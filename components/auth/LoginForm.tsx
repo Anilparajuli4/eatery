@@ -88,13 +88,19 @@ export default function LoginForm() {
                 }
             } catch (err: any) {
                 const msg = err.response?.data?.message || err.message || 'Google login failed';
+                console.error("Google Login Backend Error:", {
+                    status: err.response?.status,
+                    data: err.response?.data,
+                    fullError: err
+                });
                 showToast(msg, 'error');
             } finally {
                 setIsLoading(false);
             }
         },
-        onError: () => {
-            showToast('Google login failed', 'error');
+        onError: (errorResponse: any) => {
+            console.error("Google Login Popup/Client Error:", errorResponse);
+            showToast('Google login was closed or failed. Check console for details.', 'error');
             setIsLoading(false);
         }
     });

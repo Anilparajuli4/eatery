@@ -30,6 +30,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+  if (!googleClientId) {
+    console.error("Google Client ID is missing! Make sure NEXT_PUBLIC_GOOGLE_CLIENT_ID is set in .env.local and you have restarted the server.");
+  } else {
+    console.log("Google Client ID loaded:", googleClientId);
+  }
 
   return (
     <html lang="en" suppressHydrationWarning>

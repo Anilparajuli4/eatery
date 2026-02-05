@@ -173,15 +173,20 @@ export default function BSquareEatery() {
         if (checkoutStep === 3) {
             setIsPaymentLoading(true);
             try {
-                const payload = {
+                const payload: any = {
                     items: cart.map(item => ({
                         productId: item.id,
                         quantity: item.quantity
                     })),
                     customerName: orderDetails.name,
                     customerPhone: orderDetails.phone,
-                    customerAddress: orderDetails.address
+                    specialInstruction: orderDetails.instructions,
+                    paymentMethod: orderDetails.paymentMethod
                 };
+
+                if (orderDetails.address && orderDetails.address.trim().length > 0) {
+                    payload.customerAddress = orderDetails.address;
+                }
 
                 const { data } = await import('@/lib/api').then(m => m.default.post('/orders', payload));
 
@@ -191,8 +196,10 @@ export default function BSquareEatery() {
                     setCurrentOrderId(data.order.id);
                     // PaymentProcess modal will show up because clientSecret is set
                 } else {
-                    // Fallback for non-payment orders (if any) or error
-                    alert("Order created but no payment intent returned.");
+                    // Non-card orders (e.g., Cash on Pickup) — treat as success
+                    // Use same success flow as payment success
+                    handlePaymentSuccess();
+                    alert('Order received. Pay in cash at pickup.');
                 }
 
             } catch (error: any) {
@@ -283,10 +290,10 @@ export default function BSquareEatery() {
     }, []);
 
     const isPhoneValid = useMemo(() => /^[0-9]{10}$/.test(orderDetails.phone.trim()), [orderDetails.phone]);
-    const isAddressValid = useMemo(() => orderDetails.address.trim().split(/\s+/).filter(word => word.length > 0).length >= 2, [orderDetails.address]);
     const isNameValid = useMemo(() => orderDetails.name.trim().length >= 1, [orderDetails.name]);
 
-    const isCheckoutDisabled = checkoutStep === 2 && (!isNameValid || !isPhoneValid || !isAddressValid);
+    // Address is not required for pickup; only name and phone are required
+    const isCheckoutDisabled = checkoutStep === 2 && (!isNameValid || !isPhoneValid);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-red-50">
@@ -345,7 +352,6 @@ export default function BSquareEatery() {
                 isCheckoutDisabled={isCheckoutDisabled || isPaymentLoading}
                 isPaymentLoading={isPaymentLoading}
                 isPhoneValid={isPhoneValid}
-                isAddressValid={isAddressValid}
             />
 
             <ItemModal

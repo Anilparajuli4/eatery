@@ -24,7 +24,6 @@ interface CartSidebarProps {
     isCheckoutDisabled: boolean;
     isPaymentLoading: boolean;
     isPhoneValid: boolean;
-    isAddressValid: boolean;
 }
 
 export default function CartSidebar({
@@ -45,8 +44,7 @@ export default function CartSidebar({
     handleCheckout,
     isCheckoutDisabled,
     isPaymentLoading,
-    isPhoneValid,
-    isAddressValid
+    isPhoneValid
 }: CartSidebarProps) {
     return (
         <div className={`fixed inset-0 z-50 ${showCart ? '' : 'pointer-events-none'}`}>
@@ -181,22 +179,7 @@ export default function CartSidebar({
                                                 <p className="text-red-500 text-xs font-bold mt-1">Must be exactly 10 digits</p>
                                             )}
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">Full Address (Street, City, etc) *</label>
-                                            <input
-                                                type="text"
-                                                placeholder="123 Main St, City"
-                                                value={orderDetails.address}
-                                                onChange={e => setOrderDetails({ ...orderDetails, address: e.target.value })}
-                                                className={`w-full p-4 border-2 rounded-xl outline-none transition-colors ${orderDetails.address.length > 0 && !isAddressValid ? 'border-red-400 bg-red-50' :
-                                                    isAddressValid ? 'border-green-400' : 'border-gray-200'
-                                                    }`}
-                                                required
-                                            />
-                                            {orderDetails.address.length > 0 && !isAddressValid && (
-                                                <p className="text-red-500 text-xs font-bold mt-1">Please provide a complete address (minimum 2 words)</p>
-                                            )}
-                                        </div>
+
                                         <div>
                                             <label className="block text-sm font-bold text-gray-700 mb-2">Pickup Time</label>
                                             <select

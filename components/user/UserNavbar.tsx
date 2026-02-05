@@ -31,7 +31,10 @@ export default function UserNavbar({
 
     const handleLogout = () => {
         logout();
-        router.push('/login');
+        // Return user to the app home page instead of login
+        setCurrentPage('home');
+        setMobileMenu(false);
+        router.push('/');
     };
 
     return (

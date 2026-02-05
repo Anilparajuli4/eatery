@@ -106,7 +106,15 @@ export default function AdminOrders() {
                                         <span className="bg-orange-50 p-1.5 rounded-lg text-sm">📞</span> {order.customerPhone}
                                     </p>
                                     <p className="text-gray-600 flex items-center gap-2">
-                                        <span className="bg-orange-50 p-1.5 rounded-lg text-sm">📍</span> {order.customerAddress}
+                                        <span className="bg-orange-50 p-1.5 rounded-lg text-sm">📍</span> {order.customerAddress || 'No address provided'}
+                                    </p>
+                                    {order.specialInstruction && (
+                                        <p className="text-red-600 font-bold flex items-center gap-2 bg-red-50 p-2 rounded-lg mt-2">
+                                            <span className="text-lg">📝</span> {order.specialInstruction}
+                                        </p>
+                                    )}
+                                    <p className="text-slate-500 text-xs font-bold mt-2 flex items-center gap-2">
+                                        <span className="bg-slate-100 px-2 py-0.5 rounded uppercase">{order.paymentMethod || 'STRIPE'}</span>
                                     </p>
                                 </div>
                             </div>

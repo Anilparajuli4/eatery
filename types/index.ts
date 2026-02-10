@@ -35,6 +35,8 @@ export interface Order {
     customerPhone?: string;
     customerAddress?: string;
     paymentStatus?: 'PENDING' | 'PAID' | 'FAILED';
+    paymentMethod?: string;
+    paymentId?: string;
     createdAt: string;
     status: 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED';
 }

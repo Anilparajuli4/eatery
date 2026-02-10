@@ -145,11 +145,23 @@ export default function BSquareEatery() {
             // Simple mapping helper
             const categoryMap: Record<string, string> = {
                 'beefBurgers': 'BEEF_BURGERS',
+                'steakSandwiches': 'STEAK_SANDWICHES',
                 'chickenBurgers': 'CHICKEN_BURGERS',
+                'fishBurgers': 'FISH_BURGERS',
+                'veggieBurgers': 'VEGGIE_BURGERS',
+                'rolls': 'ROLLS',
+                'wraps': 'WRAPS',
+                'hotFood': 'HOT_FOOD',
+                'salads': 'SALADS',
                 'seafood': 'SEAFOOD',
+                'loadedFries': 'LOADED_FRIES',
                 'fries': 'LOADED_FRIES',
+                'chickenWings': 'CHICKEN_WINGS',
+                'kidsMenu': 'KIDS_MENU',
                 'sides': 'SIDES',
-                'drinks': 'DRINKS'
+                'milkshakes': 'MILKSHAKES',
+                'softDrinks': 'SOFT_DRINKS',
+                'drinks': 'SOFT_DRINKS'
             };
             const targetCat = categoryMap[selectedCategory] || selectedCategory;
             items = menuItems.filter(i => i.category === targetCat);
@@ -190,6 +202,12 @@ export default function BSquareEatery() {
 
                 const { data } = await import('@/lib/api').then(m => m.default.post('/orders', payload));
 
+                // Save order ID to localStorage to track status later (especially for guests)
+                const localOrders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || '[]');
+                if (!localOrders.includes(data.order.id)) {
+                    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([data.order.id, ...localOrders]));
+                }
+
                 // data contains { order, clientSecret }
                 if (data.clientSecret) {
                     setClientSecret(data.clientSecret);
@@ -197,7 +215,6 @@ export default function BSquareEatery() {
                     // PaymentProcess modal will show up because clientSecret is set
                 } else {
                     // Non-card orders (e.g., Cash on Pickup) — treat as success
-                    // Use same success flow as payment success
                     handlePaymentSuccess();
                     alert('Order received. Pay in cash at pickup.');
                 }
@@ -223,7 +240,7 @@ export default function BSquareEatery() {
             setShowCart(false);
             setCheckoutStep(1);
             setOrderPlaced(false);
-            setCurrentPage('home');
+            setCurrentPage('orders'); // Redirect to orders to track status
             setOrderDetails({
                 name: '',
                 phone: '',
@@ -232,29 +249,37 @@ export default function BSquareEatery() {
                 paymentMethod: 'card',
                 address: ''
             });
-        }, 4000);
+        }, 3000);
     };
 
     // Fetch Order History & Socket Setup
     useEffect(() => {
+        const socket = require('@/lib/socket').default;
+        socket.connect();
+
         const fetchOrders = async () => {
             try {
                 const token = localStorage.getItem('token');
-                if (token) {
-                    const { data } = await import('@/lib/api').then(m => m.default.get('/orders'));
-                    setOrderHistory(data);
+                const localOrderIds = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || '[]');
+
+                if (!token && localOrderIds.length === 0) {
+                    setOrderHistory([]);
+                    return;
                 }
+
+                const endpoint = localOrderIds.length > 0
+                    ? `/orders?ids=${localOrderIds.join(',')}`
+                    : '/orders';
+
+                const { data } = await import('@/lib/api').then(m => m.default.get(endpoint));
+                setOrderHistory(data);
+                data.forEach((o: any) => socket.emit('join_order_room', o.id));
             } catch (error: any) {
                 console.error("Failed to fetch orders", error);
-                // 401 is now handled globally in AuthContext
             }
         };
 
         fetchOrders();
-
-        // Socket Setup
-        const socket = require('@/lib/socket').default;
-        socket.connect();
 
         const token = localStorage.getItem('token');
         const userJson = localStorage.getItem('user');
@@ -268,11 +293,13 @@ export default function BSquareEatery() {
         }
 
         const handleStatusUpdate = (updatedOrder: any) => {
+            console.log('Received order update via socket:', updatedOrder.id, updatedOrder.status);
             setOrderHistory(prev => {
                 const exists = prev.find(o => o.id === updatedOrder.id);
                 if (exists) {
                     return prev.map(o => o.id === updatedOrder.id ? updatedOrder : o);
                 }
+                // If it's a new order that belongs to guest or user, add it
                 return [updatedOrder, ...prev];
             });
         };
@@ -282,7 +309,7 @@ export default function BSquareEatery() {
         return () => {
             socket.off('order_status_update', handleStatusUpdate);
         };
-    }, []);
+    }, [currentPage]);
 
     const openItemModal = useCallback((item: MenuItem) => {
         setSelectedItem(item);

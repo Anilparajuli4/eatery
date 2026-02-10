@@ -88,15 +88,23 @@ export default function CartSidebar({
                         </div>
                     ) : orderPlaced ? (
                         <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-                            <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mb-6 shadow-2xl">
-                                <Check size={50} className="text-white" />
+                            <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 shadow-2xl ${orderDetails.paymentMethod === 'cash' ? 'bg-orange-500' : 'bg-green-500'}`}>
+                                {orderDetails.paymentMethod === 'cash' ? <span className="text-4xl text-white">💵</span> : <Check size={50} className="text-white" />}
                             </div>
                             <h3 className="text-4xl font-black text-gray-900 mb-3">Order Placed!</h3>
                             <p className="text-xl text-gray-600 mb-2">We're preparing your meal</p>
                             <p className="text-orange-600 font-bold text-lg mb-4">Ready in {getEstimatedTime} minutes</p>
+
+                            {orderDetails.paymentMethod === 'cash' && (
+                                <div className="mb-6 p-4 bg-orange-100 rounded-2xl border-2 border-orange-200">
+                                    <p className="font-black text-orange-800 uppercase tracking-tight">Pay at the Counter</p>
+                                    <p className="text-sm text-orange-700">Please have ${getTotal} ready when you arrive.</p>
+                                </div>
+                            )}
+
                             <p className="text-gray-500 mb-6">Order #BS{Math.floor(Math.random() * 10000)}</p>
-                            <div className="w-full bg-orange-100 rounded-2xl p-4">
-                                <p className="text-sm text-gray-700">📱 We'll send you updates via SMS</p>
+                            <div className="w-full bg-blue-50 rounded-2xl p-4 border border-blue-100">
+                                <p className="text-sm text-blue-700 font-bold">📱 We'll notify you when it's ready!</p>
                             </div>
                         </div>
                     ) : (

@@ -53,15 +53,26 @@ export default function OrderHistory({ orderHistory, setCurrentPage }: OrderHist
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <span className={`px-6 py-2 rounded-2xl text-sm font-black uppercase tracking-wider ${order.status === 'READY' ? 'bg-green-500 text-white animate-bounce' :
-                                                order.status === 'PREPARING' ? 'bg-blue-500 text-white' :
-                                                    order.status === 'PENDING' ? 'bg-yellow-500 text-white' :
-                                                        'bg-gray-800 text-white'
-                                                }`}>
-                                                {order.status === 'READY' ? '🔥 READY FOR PICKUP' : order.status}
-                                            </span>
+                                            <div className="flex flex-col items-end gap-2">
+                                                <span className={`px-4 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest ${order.paymentStatus === 'PAID' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}`}>
+                                                    {order.paymentStatus === 'PAID' ? '✅ PAID' : `💳 ${order.paymentMethod || 'PENDING'}`}
+                                                </span>
+                                                <span className={`px-6 py-2 rounded-2xl text-sm font-black uppercase tracking-wider ${order.status === 'READY' ? 'bg-green-500 text-white animate-bounce' :
+                                                    order.status === 'PREPARING' ? 'bg-blue-500 text-white' :
+                                                        order.status === 'PENDING' ? 'bg-yellow-500 text-white' :
+                                                            'bg-gray-800 text-white'
+                                                    }`}>
+                                                    {order.status === 'READY' ? '🔥 READY FOR PICKUP' : order.status}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
+
+                                    {order.paymentMethod === 'CASH' && order.paymentStatus === 'PENDING' && (
+                                        <div className="bg-orange-500 text-white px-6 py-2 text-center text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2">
+                                            <span>⚠️ PLEASE PAY AT COUNTER ON PICKUP</span>
+                                        </div>
+                                    )}
 
                                     <div className="p-8">
                                         {/* Status Timeline */}

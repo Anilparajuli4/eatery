@@ -65,6 +65,25 @@ export default function AdminOrders() {
         }
     };
 
+    const markPaid = async (id: number) => {
+        setUpdatingOrders(prev => new Set(prev).add(id));
+        try {
+            await import('@/lib/api').then(m => m.default.patch(`/orders/${id}/payment-status`, { paymentStatus: 'PAID' }));
+            // Optimistic update
+            setOrders(prev => prev.map(o => o.id === id ? { ...o, paymentStatus: 'PAID' } : o));
+            showToast(`Order #${id} marked as PAID`, 'success');
+        } catch (error) {
+            console.error("Failed to mark as paid", error);
+            showToast("Failed to mark as paid", "error");
+        } finally {
+            setUpdatingOrders(prev => {
+                const next = new Set(prev);
+                next.delete(id);
+                return next;
+            });
+        }
+    };
+
     return (
         <div className="space-y-6">
             <h2 className="text-3xl font-black text-gray-800">Order Management</h2>
@@ -150,6 +169,16 @@ export default function AdminOrders() {
                                 <span className="font-bold">🕐 Status: </span> {order.status}
                             </div>
                             <div className="flex gap-2">
+                                {order.paymentMethod === 'CASH' && order.paymentStatus === 'PENDING' && (
+                                    <button
+                                        onClick={() => markPaid(order.id)}
+                                        disabled={updatingOrders.has(order.id)}
+                                        className="px-6 py-2 bg-green-100 text-green-700 rounded-lg font-bold hover:bg-green-200 transition-colors disabled:opacity-50 flex items-center gap-2 border border-green-200"
+                                    >
+                                        {updatingOrders.has(order.id) && <div className="w-4 h-4 border-2 border-green/30 border-t-green-700 rounded-full animate-spin" />}
+                                        💰 Mark Paid
+                                    </button>
+                                )}
                                 {order.status === 'PENDING' && (
                                     <button
                                         onClick={() => updateStatus(order.id, 'PREPARING')}

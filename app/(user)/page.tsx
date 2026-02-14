@@ -1,17 +1,25 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { MENU_DATA } from '@/lib/data';
 import { MenuItem, CartItem, OrderDetails, Order, PageType, CategoryType } from '@/types';
 import UserNavbar from '@/components/user/UserNavbar';
 import HeroSection from '@/components/user/HeroSection';
 import MenuSection from '@/components/user/MenuSection';
+import CategoryGrid from '@/components/user/CategoryGrid';
+import FeaturedItems from '@/components/user/FeaturedItems';
+import HowItWorks from '@/components/user/HowItWorks';
+import PickupInfo from '@/components/user/PickupInfo';
+import Testimonials from '@/components/user/Testimonials';
 import AboutSection from '@/components/user/AboutSection';
+import Footer from '@/components/user/Footer';
 import OrderHistory from '@/components/user/OrderHistory';
 import CartSidebar from '@/components/user/CartSidebar';
 import ItemModal from '@/components/user/ItemModal';
 import { useAuth } from '@/context/AuthContext';
 import PaymentProcess from '@/components/payment/PaymentProcess';
+import { useToast } from '@/context/ToastContext';
 
 const STORAGE_KEYS = {
     CART: 'bsquare-cart',
@@ -21,6 +29,7 @@ const STORAGE_KEYS = {
 
 export default function BSquareEatery() {
     const { logout } = useAuth();
+    const { showToast } = useToast();
     const [currentPage, setCurrentPage] = useState<PageType>('home');
     const [cart, setCart] = useState<CartItem[]>([]);
     const [favorites, setFavorites] = useState<number[]>([]);
@@ -67,7 +76,8 @@ export default function BSquareEatery() {
             }
             return [...prevCart, { ...item, quantity: 1 }];
         });
-    }, []);
+        showToast(`${item.name} added to cart!`, 'success');
+    }, [showToast]);
 
     const toggleFavorite = useCallback((id: number) => {
         setFavorites(prev =>
@@ -102,26 +112,32 @@ export default function BSquareEatery() {
     }, [cart]);
 
     const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+    const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
     const [isMenuLoading, setIsMenuLoading] = useState(true);
 
-    // Fetch Menu Items
+    // Fetch Menu Items & Popular Items
     useEffect(() => {
-        const fetchMenu = async () => {
+        const fetchData = async () => {
             setIsMenuLoading(true);
             try {
-                // Determine if we should mock for now or fetch
-                // For integration, we try fetch, fallback to empty or handle error
-                const { data } = await import('@/lib/api').then(m => m.default.get('/products'));
-                setMenuItems(data);
+                // Fetch main menu (paginated default)
+                const menuRes = await import('@/lib/api').then(m => m.default.get('/products?limit=100'));
+                setMenuItems(menuRes.data.items || []);
+
+                // Fetch popular items explicitly
+                const popularRes = await import('@/lib/api').then(m => m.default.get('/products?isPopular=true&limit=8'));
+                setPopularItems(popularRes.data.items || []);
             } catch (error) {
-                console.error("Failed to fetch menu", error);
-                // Fallback to static data if API fails (optional, for safety during transition)
-                setMenuItems(Object.values(MENU_DATA).flat());
+                console.error("Failed to fetch menu data", error);
+                // Fallback
+                const allItems = Object.values(MENU_DATA).flat();
+                setMenuItems(allItems);
+                setPopularItems(allItems.filter(i => i.isPopular));
             } finally {
                 setIsMenuLoading(false);
             }
         };
-        fetchMenu();
+        fetchData();
     }, []);
 
     const getAllItems = useCallback(() => {
@@ -334,7 +350,66 @@ export default function BSquareEatery() {
                 setMobileMenu={setMobileMenu}
             />
 
-            {currentPage === 'home' && <HeroSection setCurrentPage={setCurrentPage} />}
+            {currentPage === 'home' && (
+                <div className="flex flex-col min-h-screen">
+                    <HeroSection setCurrentPage={setCurrentPage} />
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 40 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <CategoryGrid
+                            onSelectCategory={(categoryId) => {
+                                setSelectedCategory(categoryId);
+                                setCurrentPage('menu');
+                            }}
+                        />
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <FeaturedItems
+                            setCurrentPage={setCurrentPage}
+                            products={popularItems}
+                        />
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, x: -50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <HowItWorks />
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ duration: 0.8 }}
+                    >
+                        <Testimonials />
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1 }}
+                    >
+                        <AboutSection />
+                    </motion.div>
+
+                    <Footer />
+                </div>
+            )}
 
             {currentPage === 'menu' && (
                 <MenuSection
@@ -342,16 +417,16 @@ export default function BSquareEatery() {
                     setSearchQuery={setSearchQuery}
                     selectedCategory={selectedCategory}
                     setSelectedCategory={setSelectedCategory}
-                    filteredItems={getFilteredItems}
                     openItemModal={openItemModal}
                     favorites={favorites}
                     toggleFavorite={toggleFavorite}
                     addToCart={addToCart}
-                    isLoading={isMenuLoading}
                 />
             )}
 
             {currentPage === 'about' && <AboutSection />}
+
+            {currentPage === 'location' && <PickupInfo />}
 
             {currentPage === 'orders' && (
                 <OrderHistory

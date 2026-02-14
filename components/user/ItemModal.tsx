@@ -36,48 +36,78 @@ export default function ItemModal({
                     <X size={20} />
                 </button>
 
-                <div className="bg-gradient-to-br from-orange-400 via-red-400 to-pink-400 h-64 flex items-center justify-center">
-                    <div className="text-9xl">{getItemEmoji(selectedItem.category)}</div>
+                <div className="relative h-72 w-full overflow-hidden bg-gray-100">
+                    {selectedItem.image ? (
+                        <img
+                            src={selectedItem.image}
+                            alt={selectedItem.name}
+                            className="w-full h-full object-cover"
+                        />
+                    ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-orange-400 via-red-400 to-pink-400 flex items-center justify-center">
+                            <div className="text-9xl">{getItemEmoji(selectedItem.category)}</div>
+                        </div>
+                    )}
+                    {selectedItem.isPopular && (
+                        <div className="absolute top-4 left-4 bg-orange-500 text-white px-4 py-2 rounded-2xl flex items-center gap-2 shadow-xl text-sm font-black uppercase tracking-wider animate-bounce">
+                            <Star size={16} fill="white" />
+                            Chef's Special
+                        </div>
+                    )}
                 </div>
 
                 <div className="p-8">
-                    <div className="flex items-start justify-between mb-4">
-                        <div>
-                            <h2 className="text-3xl font-black text-gray-900 mb-2">{selectedItem.name}</h2>
+                    <div className="flex items-start justify-between mb-6">
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h2 className="text-4xl font-black text-gray-900 tracking-tight">{selectedItem.name}</h2>
+                                {selectedItem.isPopular && (
+                                    <span className="px-3 py-1 bg-green-100 text-green-700 text-[10px] font-black rounded-full uppercase tracking-widest border border-green-200">
+                                        Popular
+                                    </span>
+                                )}
+                            </div>
                             <div className="flex items-center gap-4 text-sm">
-                                <div className="flex items-center gap-1 text-yellow-500 font-semibold">
-                                    <Star size={18} fill="currentColor" />
-                                    {selectedItem.rating}
+                                <div className="flex items-center gap-1.5 text-gray-500 font-medium bg-gray-100 px-3 py-1.5 rounded-xl">
+                                    <Clock size={18} className="text-orange-500" />
+                                    Ready in {selectedItem.prepTime} min
                                 </div>
-                                <div className="flex items-center gap-1 text-gray-500">
-                                    <Clock size={18} />
-                                    {selectedItem.prepTime} min
+                                <div className="flex items-center gap-1.5 text-orange-600 font-bold">
+                                    <Heart size={18} fill="currentColor" />
+                                    100+ Favorites
                                 </div>
                             </div>
                         </div>
                         <button
                             onClick={() => toggleFavorite(selectedItem.id)}
-                            className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                            className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center hover:bg-gray-100 transition-all border border-gray-100 group shadow-sm"
                             aria-label={favorites.includes(selectedItem.id) ? 'Remove from favorites' : 'Add to favorites'}
                         >
                             <Heart
-                                size={24}
-                                className={favorites.includes(selectedItem.id) ? 'text-red-500 fill-red-500' : 'text-gray-400'}
+                                size={28}
+                                className={favorites.includes(selectedItem.id) ? 'text-red-500 fill-red-500 scale-110' : 'text-gray-300 group-hover:text-red-400 transition-transform duration-300'}
                             />
                         </button>
                     </div>
 
-                    <p className="text-gray-700 mb-6 leading-relaxed">{selectedItem.description}</p>
+                    <div className="relative mb-8">
+                        <p className="text-gray-600 text-lg leading-relaxed font-medium">
+                            {selectedItem.description}
+                        </p>
+                    </div>
 
-                    <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-                        <span className="text-4xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                            ${selectedItem.price.toFixed(2)}
-                        </span>
+                    <div className="flex items-center justify-between pt-8 border-t-2 border-dashed border-gray-100">
+                        <div className="flex flex-col">
+                            <span className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Price</span>
+                            <span className="text-4xl font-black text-gray-900 italic">
+                                ${selectedItem.price.toFixed(2)}
+                            </span>
+                        </div>
                         <button
                             onClick={() => { addToCart(selectedItem); setShowItemModal(false); }}
-                            className="px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl font-bold hover:shadow-xl transition-all flex items-center gap-2"
+                            className="px-10 py-5 bg-orange-500 text-white rounded-3xl font-black text-lg hover:bg-orange-600 hover:shadow-2xl hover:shadow-orange-500/40 transition-all active:scale-95 flex items-center gap-3 group"
                         >
-                            <Plus size={20} />
+                            <Plus size={24} className="group-hover:rotate-90 transition-transform" />
                             Add to Cart
                         </button>
                     </div>

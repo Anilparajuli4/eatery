@@ -16,6 +16,7 @@ import {
     ChevronRight,
     Search,
     Bell,
+    Star,
     X
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -33,6 +34,7 @@ const adminItems: SidebarItem[] = [
     { name: 'Inventory', href: '/admin/inventory', icon: Box },
     { name: 'Customers', href: '/admin/users', icon: Users },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+    { name: 'Chef\'s Specials', href: '/admin/specials', icon: Star },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 

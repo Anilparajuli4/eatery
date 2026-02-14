@@ -1,24 +1,27 @@
 'use client';
 
-import React from 'react';
-import { Search, Star, Clock, Heart, Plus, Sparkles, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Search, Star, Clock, Heart, Plus, Sparkles, AlertCircle, Loader2, ChevronDown, ArrowUpDown } from 'lucide-react';
 import { CATEGORIES } from '@/lib/data';
-import { MenuItem, CategoryType } from '@/types';
+import { MenuItem, CategoryType, PaginatedResponse } from '@/types';
 import { getItemEmoji } from '@/lib/utils';
 import Skeleton from '../ui/Skeleton';
 import { getMediaUrl } from '@/lib/config';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/lib/api';
+
+type SortOption = 'createdAt' | 'price' | 'prepTime';
+type SortOrder = 'asc' | 'desc';
 
 interface MenuSectionProps {
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     selectedCategory: CategoryType;
     setSelectedCategory: (category: CategoryType) => void;
-    filteredItems: MenuItem[];
     openItemModal: (item: MenuItem) => void;
     favorites: number[];
     toggleFavorite: (id: number) => void;
     addToCart: (item: MenuItem) => void;
-    isLoading?: boolean;
 }
 
 export default function MenuSection({
@@ -26,13 +29,99 @@ export default function MenuSection({
     setSearchQuery,
     selectedCategory,
     setSelectedCategory,
-    filteredItems,
     openItemModal,
     favorites,
     toggleFavorite,
-    addToCart,
-    isLoading = false
+    addToCart
 }: MenuSectionProps) {
+    const [sortBy, setSortBy] = useState<SortOption>('createdAt');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+
+    const { data: categoriesData = [] } = useQuery({
+        queryKey: ['categories'],
+        queryFn: async () => {
+            const { data } = await api.get('/products/categories');
+            return data; // Array of { key: string, count: number }
+        }
+    });
+
+    // Map backend categories to our UI structure
+    const dynamicCategories = [
+        {
+            key: 'all' as CategoryType,
+            label: 'All Items',
+            emoji: '🍽️',
+            count: categoriesData.reduce((acc: number, curr: any) => acc + curr.count, 0)
+        },
+        ...categoriesData.map((cat: any) => {
+            const mapped = CATEGORIES.find(c => c.key === cat.key);
+            return {
+                key: cat.key as CategoryType,
+                label: mapped?.label || cat.key.replace(/_/g, ' ').toLowerCase(),
+                emoji: mapped?.emoji || '🍔',
+                count: cat.count
+            };
+        })
+    ];
+
+    const [items, setItems] = useState<MenuItem[]>([]);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const [isInitialLoading, setIsInitialLoading] = useState(true);
+    const [isFetchingMore, setIsFetchingMore] = useState(false);
+
+    const observer = useRef<IntersectionObserver | null>(null);
+    const lastItemRef = useCallback((node: HTMLDivElement | null) => {
+        if (isInitialLoading || isFetchingMore) return;
+        if (observer.current) observer.current.disconnect();
+
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                setPage(prevPage => prevPage + 1);
+            }
+        });
+
+        if (node) observer.current.observe(node);
+    }, [isInitialLoading, isFetchingMore, hasMore]);
+
+    const fetchItems = useCallback(async (pageNum: number, isNewSearch: boolean = false) => {
+        if (pageNum === 1) setIsInitialLoading(true);
+        else setIsFetchingMore(true);
+
+        try {
+            const params = new URLSearchParams({
+                page: pageNum.toString(),
+                limit: '12',
+                category: selectedCategory,
+                search: searchQuery,
+                sortBy,
+                sortOrder
+            });
+
+            const { data } = await api.get<PaginatedResponse<MenuItem>>(`/products?${params.toString()}`);
+
+            setItems(prev => isNewSearch ? data.items : [...prev, ...data.items]);
+            setHasMore(data.meta.currentPage < data.meta.totalPages);
+        } catch (error) {
+            console.error("Failed to fetch products:", error);
+        } finally {
+            setIsInitialLoading(false);
+            setIsFetchingMore(false);
+        }
+    }, [selectedCategory, searchQuery, sortBy, sortOrder]);
+
+    // Reset and fetch when filters change
+    useEffect(() => {
+        setPage(1);
+        fetchItems(1, true);
+    }, [selectedCategory, searchQuery, sortBy, sortOrder]);
+
+    // Fetch more when page changes
+    useEffect(() => {
+        if (page > 1) {
+            fetchItems(page);
+        }
+    }, [page]);
 
     return (
         <div className="pt-24 pb-16 min-h-screen">
@@ -44,37 +133,73 @@ export default function MenuSection({
                     <p className="text-2xl text-gray-600 font-medium">Handcrafted with passion</p>
                 </div>
 
-                <div className="max-w-2xl mx-auto mb-10">
-                    <div className="relative group">
-                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" size={22} />
-                        <input
-                            type="text"
-                            placeholder="Search delicious food..."
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full pl-14 pr-6 py-4 rounded-2xl border-2 border-gray-200 focus:border-orange-500 outline-none text-lg shadow-lg focus:shadow-xl transition-all bg-white"
-                        />
+                <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md -mx-4 px-4 py-4 mb-10 border-b border-gray-100 shadow-sm">
+                    <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-4">
+                        <div className="relative flex-1 group">
+                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" size={20} />
+                            <input
+                                type="text"
+                                placeholder="Search delicious food..."
+                                value={searchQuery}
+                                onChange={e => setSearchQuery(e.target.value)}
+                                className="w-full pl-12 pr-6 py-3.5 rounded-2xl border-2 border-gray-100 focus:border-orange-500 outline-none text-lg shadow-sm focus:shadow-md transition-all bg-white"
+                            />
+                        </div>
+
+                        <div className="flex gap-2">
+                            <div className="relative group">
+                                <ArrowUpDown className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 pointer-events-none" size={18} />
+                                <select
+                                    value={`${sortBy}-${sortOrder}`}
+                                    onChange={(e) => {
+                                        const [newSort, newOrder] = e.target.value.split('-') as [SortOption, SortOrder];
+                                        setSortBy(newSort);
+                                        setSortOrder(newOrder);
+                                    }}
+                                    className="pl-11 pr-10 py-3.5 rounded-2xl border-2 border-gray-100 focus:border-orange-500 outline-none bg-white font-bold text-gray-700 shadow-sm cursor-pointer appearance-none min-w-[180px]"
+                                >
+                                    <option value="createdAt-desc">Newest First</option>
+                                    <option value="price-asc">Price: Low to High</option>
+                                    <option value="price-desc">Price: High to Low</option>
+                                    <option value="prepTime-asc">Fastest First</option>
+                                </select>
+                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex overflow-x-auto gap-3 mt-6 pb-2 scrollbar-hide max-w-7xl mx-auto">
+                        {dynamicCategories.map(cat => (
+                            <button
+                                key={cat.key}
+                                onClick={() => setSelectedCategory(cat.key)}
+                                className={`px-6 py-3 rounded-2xl font-bold whitespace-nowrap transition-all shadow-sm relative group/btn capitalize flex items-center gap-2 ${selectedCategory === cat.key
+                                    ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white scale-105 shadow-orange-200 shadow-lg ring-4 ring-orange-500/20'
+                                    : 'bg-white text-gray-600 border-2 border-gray-100 hover:border-orange-200 hover:text-orange-600'
+                                    }`}
+                            >
+                                <span className={`text-xl transition-transform group-hover/btn:scale-125 duration-300`}>
+                                    {cat.emoji}
+                                </span>
+                                <span className="flex items-center gap-2">
+                                    {cat.label}
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${selectedCategory === cat.key
+                                        ? 'bg-white/20 text-white'
+                                        : 'bg-gray-100 text-gray-400'
+                                        }`}>
+                                        {cat.count}
+                                    </span>
+                                </span>
+                                {selectedCategory === cat.key && (
+                                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-white rounded-full"></div>
+                                )}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                <div className="flex overflow-x-auto gap-3 mb-10 pb-3 scrollbar-hide">
-                    {CATEGORIES.map(cat => (
-                        <button
-                            key={cat.key}
-                            onClick={() => setSelectedCategory(cat.key)}
-                            className={`px-6 py-3 rounded-2xl font-bold whitespace-nowrap transition-all shadow-md hover:shadow-lg ${selectedCategory === cat.key
-                                ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white scale-105'
-                                : 'bg-white text-gray-700 border-2 border-gray-100 hover:border-orange-300'
-                                }`}
-                        >
-                            <span className="text-xl mr-2">{cat.emoji}</span>
-                            {cat.label}
-                        </button>
-                    ))}
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {isLoading ? (
+                    {isInitialLoading ? (
                         [1, 2, 3, 4, 5, 6].map((i) => (
                             <div key={i} className="bg-white rounded-3xl shadow-lg border-2 border-gray-100 overflow-hidden">
                                 <Skeleton className="h-48 w-full rounded-none" />
@@ -95,9 +220,10 @@ export default function MenuSection({
                             </div>
                         ))
                     ) : (
-                        filteredItems.map(item => (
+                        items.map((item, index) => (
                             <div
-                                key={item.id}
+                                key={`${item.id}-${index}`}
+                                ref={index === items.length - 1 ? lastItemRef : null}
                                 className={`group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all hover:-translate-y-2 overflow-hidden cursor-pointer border-2 border-transparent hover:border-orange-200 ${!item.isAvailable || item.stock === 0 ? 'opacity-75 grayscale-[0.5]' : ''}`}
                                 onClick={() => openItemModal(item)}
                             >
@@ -167,11 +293,7 @@ export default function MenuSection({
                                         </div>
                                     )}
 
-                                    <div className="flex items-center gap-4 mb-4 text-sm">
-                                        <div className="flex items-center gap-1 text-yellow-500 font-semibold">
-                                            <Star size={16} fill="currentColor" />
-                                            {item.rating}
-                                        </div>
+                                    <div className="mb-4">
                                         <div className="flex items-center gap-1 text-gray-500">
                                             <Clock size={16} />
                                             {item.prepTime} min
@@ -206,7 +328,13 @@ export default function MenuSection({
                     )}
                 </div>
 
-                {filteredItems.length === 0 && (
+                {isFetchingMore && (
+                    <div className="flex justify-center py-8">
+                        <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+                    </div>
+                )}
+
+                {!isInitialLoading && items.length === 0 && (
                     <div className="text-center py-20">
                         <div className="text-7xl mb-4">🔍</div>
                         <h3 className="text-2xl font-bold text-gray-400 mb-2">No items found</h3>

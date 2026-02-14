@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ShoppingCart, Menu } from 'lucide-react';
+import { ShoppingCart, Menu, Home, Utensils, Info, MapPin, ClipboardList } from 'lucide-react';
 import { PageType } from '@/types';
 
 interface UserNavbarProps {
@@ -28,6 +28,15 @@ export default function UserNavbar({
 }: UserNavbarProps) {
     const { user, logout } = useAuth();
     const router = useRouter();
+    const [scrolled, setScrolled] = React.useState(false);
+
+    React.useEffect(() => {
+        const handleScroll = () => {
+            setScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -38,34 +47,39 @@ export default function UserNavbar({
     };
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-40 backdrop-blur-md bg-white/80 shadow-lg border-b border-orange-100">
-            <div className="max-w-7xl mx-auto px-4 py-3">
+        <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
+            ? 'bg-white/95 backdrop-blur-md shadow-xl py-2'
+            : 'bg-transparent py-4'
+            }`}>
+            <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between">
                     <button onClick={() => setCurrentPage('home')} className="flex items-center gap-3 group">
                         <div className="w-12 h-12 bg-gradient-to-br from-orange-500 via-red-500 to-pink-500 rounded-2xl flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
                             🍔
                         </div>
                         <div className="hidden sm:block">
-                            <span className="text-xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                            <span className="text-lg sm:text-xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent uppercase italic">
                                 BSquare Eatery
                             </span>
-                            <p className="text-xs text-gray-500 font-bold">Where hunger meets flavour</p>
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Order Online • Pick Up Fresh</p>
                         </div>
                     </button>
 
                     <div className="hidden md:flex gap-8">
-                        {(['home', 'menu', 'about', 'orders'] as PageType[]).map(page => (
+                        {(['home', 'menu', 'about', 'location', 'orders'] as PageType[]).map(page => (
                             <button
                                 key={page}
-                                onClick={() => setCurrentPage(page)}
-                                className={`font-bold capitalize transition-all relative ${currentPage === page
+                                onClick={() => {
+                                    setCurrentPage(page);
+                                }}
+                                className={`font-black capitalize transition-all relative text-sm tracking-widest uppercase ${currentPage === page
                                     ? 'text-orange-600'
                                     : 'text-gray-600 hover:text-orange-600'
                                     }`}
                             >
                                 {page}
                                 {currentPage === page && (
-                                    <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-full" />
+                                    <div className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 to-red-500 rounded-full" />
                                 )}
                             </button>
                         ))}
@@ -165,18 +179,49 @@ export default function UserNavbar({
                             </div>
                         )}
 
-                        {(['home', 'menu', 'about', 'orders'] as PageType[]).map(page => (
-                            <button
-                                key={page}
-                                onClick={() => { setCurrentPage(page); setMobileMenu(false); }}
-                                className={`block w-full text-left py-3 px-4 font-bold capitalize rounded-xl transition-all ${currentPage === page
-                                    ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                                    : 'text-gray-600 hover:bg-orange-50'
-                                    }`}
-                            >
-                                {page}
-                            </button>
-                        ))}
+                        {(['home', 'menu', 'about', 'location', 'orders'] as PageType[]).map((page, idx) => {
+                            const icons = {
+                                home: <Home size={20} />,
+                                menu: <Utensils size={20} />,
+                                about: <Info size={20} />,
+                                location: <MapPin size={20} />,
+                                orders: <ClipboardList size={20} />
+                            };
+
+                            return (
+                                <React.Fragment key={page}>
+                                    <button
+                                        onClick={() => {
+                                            setCurrentPage(page);
+                                            setMobileMenu(false);
+                                        }}
+                                        className={`flex items-center gap-4 w-full text-left py-4 px-6 font-black uppercase text-sm tracking-widest transition-all rounded-xl ${currentPage === page
+                                            ? 'text-orange-600 bg-orange-50/80 border-l-4 border-orange-500 shadow-sm'
+                                            : 'text-slate-800 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        <span className={currentPage === page ? 'text-orange-500' : 'text-slate-400'}>
+                                            {icons[page]}
+                                        </span>
+                                        {page}
+                                    </button>
+                                    {idx < 4 && <div className="h-px bg-gray-100 mx-6 my-1" />}
+                                </React.Fragment>
+                            );
+                        })}
+
+                        {user && (
+                            <>
+                                <div className="h-px bg-gray-200 my-4 shadow-sm" />
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-4 w-full text-left py-4 px-6 font-black uppercase text-sm tracking-widest text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                                >
+                                    <LogOut size={20} />
+                                    Logout
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

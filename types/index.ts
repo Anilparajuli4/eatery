@@ -41,7 +41,7 @@ export interface Order {
     status: 'PENDING' | 'PREPARING' | 'READY' | 'COMPLETED' | 'CANCELLED';
 }
 
-export type PageType = 'home' | 'menu' | 'about' | 'orders';
+export type PageType = 'home' | 'menu' | 'about' | 'location' | 'orders';
 export type CategoryType =
     | 'all'
     | 'BEEF_BURGERS'
@@ -60,3 +60,13 @@ export type CategoryType =
     | 'SIDES'
     | 'MILKSHAKES'
     | 'SOFT_DRINKS';
+
+export interface PaginatedResponse<T> {
+    items: T[];
+    meta: {
+        totalItems: number;
+        totalPages: number;
+        currentPage: number;
+        limit: number;
+    };
+}

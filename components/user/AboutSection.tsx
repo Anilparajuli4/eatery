@@ -1,58 +1,83 @@
 'use client';
 
 import React from 'react';
-import { Clock, MapPin, Phone } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 
 export default function AboutSection() {
     return (
-        <div className="pt-24 pb-16 min-h-screen">
-            <div className="max-w-5xl mx-auto px-4 py-12">
-                <div className="text-center mb-16">
-                    <h1 className="text-6xl font-black bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent mb-3">
-                        About Us
-                    </h1>
-                    <p className="text-2xl text-gray-600 font-medium">The story behind the flavor</p>
-                </div>
-
-                <div className="bg-white rounded-3xl shadow-2xl p-10 mb-12 border border-orange-100">
-                    <div className="text-8xl text-center mb-8">🍔</div>
-                    <p className="text-xl text-gray-700 mb-6 leading-relaxed text-center">
-                        At <span className="font-bold text-orange-600">BSquare Eatery</span>, we're passionate about serving fresh, juicy, made-to-order meals that bring smiles to your face. From our signature smashed beef burgers to crispy fish & chips, every dish is crafted with premium ingredients and love.
-                    </p>
-                    <p className="text-lg text-gray-600 leading-relaxed text-center">
-                        Our diverse menu features gourmet burgers, wraps, seafood delights, loaded fries, and refreshing drinks to satisfy every craving. Quality, flavor, and customer satisfaction are at the heart of everything we do.
-                    </p>
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-8">
-                    <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border border-orange-100">
-                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                            <Clock size={32} className="text-white" />
+        <section className="py-24 bg-white overflow-hidden" id="about">
+            <div className="container mx-auto px-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                    {/* Visual Side */}
+                    <motion.div
+                        initial={{ opacity: 0, x: -50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        className="relative"
+                    >
+                        <div className="relative rounded-[3rem] overflow-hidden shadow-2xl z-10 aspect-square md:aspect-video lg:aspect-square">
+                            <img
+                                src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&h=800&fit=crop"
+                                alt="Our professional kitchen"
+                                className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/20 to-transparent"></div>
                         </div>
-                        <h3 className="font-black text-xl mb-3 text-gray-900">Opening Hours</h3>
-                        <p className="text-gray-700 font-semibold">Monday - Sunday</p>
-                        <p className="text-orange-600 font-bold text-lg">10:00 AM - 9:00 PM</p>
-                    </div>
+                        {/* Decorative background shape */}
+                        <div className="absolute -top-10 -left-10 w-64 h-64 bg-orange-100 rounded-full blur-3xl -z-0"></div>
+                        <div className="absolute top-1/2 -right-10 w-24 h-24 bg-orange-500 rounded-2xl rotate-12 -z-0 shadow-2xl shadow-orange-500/40 hidden md:block"></div>
+                    </motion.div>
 
-                    <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border border-orange-100">
-                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                            <MapPin size={32} className="text-white" />
+                    {/* Content Side */}
+                    <motion.div
+                        initial={{ opacity: 0, x: 50 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        className="space-y-10"
+                    >
+                        <div className="space-y-4">
+                            <h2 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight uppercase italic">
+                                About <span className="text-orange-500">Us</span>
+                            </h2>
+                            <div className="h-2 w-32 bg-orange-500 rounded-full"></div>
                         </div>
-                        <h3 className="font-black text-xl mb-3 text-gray-900">Find Us</h3>
-                        <p className="text-gray-700 font-semibold">123 Flavor Street</p>
-                        <p className="text-orange-600 font-bold">Food District, FC 12345</p>
-                    </div>
 
-                    <div className="bg-gradient-to-br from-orange-50 to-red-50 rounded-3xl p-8 text-center shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border border-orange-100">
-                        <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                            <Phone size={32} className="text-white" />
+                        <p className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 leading-tight tracking-tight">
+                            At BSquare Eatery, we're passionate about serving fresh, quality meals.
+                            <span className="text-orange-500"> Every dish is crafted with care </span>
+                            using premium ingredients for you to pick up hot and ready.
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                            <a href="tel:+15551234567" className="group">
+                                <div className="p-6 sm:p-8 bg-orange-500 text-white rounded-[2rem] shadow-xl shadow-orange-500/30 hover:shadow-orange-500/50 hover:scale-105 transition-all duration-300 flex flex-col items-center text-center">
+                                    <Phone size={32} className="mb-4" />
+                                    <h4 className="font-black text-lg mb-1">Call Us</h4>
+                                    <p className="font-bold opacity-90">+1 (555) 123-4567</p>
+                                </div>
+                            </a>
+                            <a href="mailto:hello@bsquareeatery.com" className="group">
+                                <div className="p-6 sm:p-8 bg-gray-900 text-white rounded-[2rem] shadow-xl shadow-gray-900/30 hover:shadow-gray-900/50 hover:scale-105 transition-all duration-300 flex flex-col items-center text-center">
+                                    <Mail size={32} className="mb-4 text-orange-500" />
+                                    <h4 className="font-black text-lg mb-1">Email Us</h4>
+                                    <p className="font-bold opacity-90">hello@bsquare.com</p>
+                                </div>
+                            </a>
                         </div>
-                        <h3 className="font-black text-xl mb-3 text-gray-900">Contact</h3>
-                        <p className="text-gray-700 font-semibold">+1 234 567 8900</p>
-                        <p className="text-orange-600 font-bold">info@bsquare.com</p>
-                    </div>
+
+                        <div className="flex items-center gap-4 sm:gap-6 p-6 bg-gray-50 rounded-3xl border border-gray-100">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg text-orange-500 shrink-0">
+                                <MapPin size={32} />
+                            </div>
+                            <div>
+                                <h4 className="font-black text-gray-900 text-lg sm:text-xl">Pick Up Location</h4>
+                                <p className="font-bold text-gray-700">123 Flavour Street, Food City</p>
+                            </div>
+                        </div>
+                    </motion.div>
                 </div>
             </div>
-        </div>
+        </section>
     );
 }

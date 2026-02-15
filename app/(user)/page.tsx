@@ -17,6 +17,7 @@ import Footer from '@/components/user/Footer';
 import OrderHistory from '@/components/user/OrderHistory';
 import CartSidebar from '@/components/user/CartSidebar';
 import ItemModal from '@/components/user/ItemModal';
+import OrderSuccessModal from '@/components/user/OrderSuccessModal';
 import { useAuth } from '@/context/AuthContext';
 import PaymentProcess from '@/components/payment/PaymentProcess';
 import { useToast } from '@/context/ToastContext';
@@ -50,6 +51,7 @@ export default function BSquareEatery() {
     const [orderHistory, setOrderHistory] = useState<Order[]>([]);
     const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
     const [showItemModal, setShowItemModal] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
 
     // Close mobile menu when page changes
     useEffect(() => {
@@ -58,7 +60,7 @@ export default function BSquareEatery() {
 
     // Prevent body scroll when cart is open
     useEffect(() => {
-        if (showCart || showItemModal) {
+        if (showCart || showItemModal || showSuccessModal) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = 'unset';
@@ -66,7 +68,7 @@ export default function BSquareEatery() {
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [showCart, showItemModal]);
+    }, [showCart, showItemModal, showSuccessModal]);
 
     const addToCart = useCallback((item: MenuItem) => {
         setCart(prevCart => {
@@ -197,6 +199,30 @@ export default function BSquareEatery() {
     const [currentOrderId, setCurrentOrderId] = useState<number | null>(null);
     const [isPaymentLoading, setIsPaymentLoading] = useState(false);
 
+    const handlePaymentSuccess = useCallback(() => {
+        setClientSecret('');
+        // setCurrentOrderId(null); // Keep currentOrderId for the modal
+        setShowSuccessModal(true);
+    }, []);
+
+    const handleCloseSuccessModal = useCallback(() => {
+        setShowSuccessModal(false);
+        setCurrentOrderId(null);
+        setCart([]);
+        setShowCart(false);
+        setCheckoutStep(1);
+        setOrderPlaced(false);
+        setCurrentPage('orders'); // Redirect to orders to track status
+        setOrderDetails({
+            name: '',
+            phone: '',
+            pickupTime: 'asap',
+            instructions: '',
+            paymentMethod: 'card',
+            address: ''
+        });
+    }, []);
+
     const handleCheckout = useCallback(async () => {
         if (checkoutStep === 3) {
             setIsPaymentLoading(true);
@@ -231,8 +257,8 @@ export default function BSquareEatery() {
                     // PaymentProcess modal will show up because clientSecret is set
                 } else {
                     // Non-card orders (e.g., Cash on Pickup) — treat as success
+                    setCurrentOrderId(data.order.id);
                     handlePaymentSuccess();
-                    alert('Order received. Pay in cash at pickup.');
                 }
 
             } catch (error: any) {
@@ -245,28 +271,7 @@ export default function BSquareEatery() {
         } else {
             setCheckoutStep(prev => prev + 1);
         }
-    }, [checkoutStep, cart, orderDetails]);
-
-    const handlePaymentSuccess = () => {
-        setClientSecret('');
-        setCurrentOrderId(null);
-        setOrderPlaced(true);
-        setTimeout(() => {
-            setCart([]);
-            setShowCart(false);
-            setCheckoutStep(1);
-            setOrderPlaced(false);
-            setCurrentPage('orders'); // Redirect to orders to track status
-            setOrderDetails({
-                name: '',
-                phone: '',
-                pickupTime: 'asap',
-                instructions: '',
-                paymentMethod: 'card',
-                address: ''
-            });
-        }, 3000);
-    };
+    }, [checkoutStep, cart, orderDetails, handlePaymentSuccess]);
 
     // Fetch Order History & Socket Setup
     useEffect(() => {
@@ -474,6 +479,20 @@ export default function BSquareEatery() {
                     customerAddress={orderDetails.address}
                     onSuccess={handlePaymentSuccess}
                     onCancel={() => setClientSecret('')}
+                />
+            )}
+
+            {currentOrderId && (
+                <OrderSuccessModal
+                    isOpen={showSuccessModal}
+                    onClose={handleCloseSuccessModal}
+                    onTrackOrder={handleCloseSuccessModal}
+                    orderDetails={{
+                        orderId: currentOrderId.toString(),
+                        total: getTotal,
+                        pickupTime: orderDetails.pickupTime,
+                        paymentMethod: orderDetails.paymentMethod as 'card' | 'cash'
+                    }}
                 />
             )}
         </div>

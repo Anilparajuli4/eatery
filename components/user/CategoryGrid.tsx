@@ -15,7 +15,7 @@ const categoryMappings: Record<string, { name: string, image: string, tagline: s
     },
     'CHICKEN_BURGERS': {
         name: 'Chicken Burgers',
-        image: 'https://images.unsplash.com/photo-1626700051175-656a4335c1a7?w=800&h=800&fit=crop',
+        image: 'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=800&h=800&fit=crop',
         tagline: 'Crispy & Golden'
     },
     'STEAK_SANDWICHES': {
@@ -45,7 +45,7 @@ const categoryMappings: Record<string, { name: string, image: string, tagline: s
     },
     'SIDES': {
         name: 'Sides',
-        image: 'https://images.unsplash.com/photo-1573806119324-da17cc86c63d?w=800&h=800&fit=crop',
+        image: 'https://images.unsplash.com/photo-1576107232684-1279f390859f?w=800&h=800&fit=crop',
         tagline: 'Perfect Pairings'
     }
 };

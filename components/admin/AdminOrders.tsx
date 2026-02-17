@@ -11,7 +11,7 @@ export default function AdminOrders() {
     const fetchOrders = async () => {
         try {
             const { data } = await import('@/lib/api').then(m => m.default.get('/orders'));
-            setOrders(data);
+            setOrders(Array.isArray(data) ? data : []);
         } catch (error) {
             console.error("Failed to fetch orders", error);
         }

@@ -154,7 +154,7 @@ export default function BSquareEatery() {
     }, [menuItems]);
 
     const getFilteredItems = useMemo(() => {
-        let items = selectedCategory === 'all' ? getAllItems() : menuItems.filter(i => i.category === selectedCategory);
+        let items = selectedCategory === 'all' ? getAllItems() : menuItems.filter((i: MenuItem) => i.category === selectedCategory);
 
         // Mapping category names if they differ from API enum
         // API uses: BEEF_BURGERS, CHICKEN_BURGERS (uppercase)

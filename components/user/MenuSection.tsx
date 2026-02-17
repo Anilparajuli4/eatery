@@ -1,14 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Search, Star, Clock, Heart, Plus, Sparkles, AlertCircle, Loader2, ChevronDown, ArrowUpDown } from 'lucide-react';
 import { CATEGORIES } from '@/lib/data';
 import { MenuItem, CategoryType, PaginatedResponse } from '@/types';
 import { getItemEmoji } from '@/lib/utils';
 import Skeleton from '../ui/Skeleton';
 import { getMediaUrl } from '@/lib/config';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
+import Image from 'next/image';
 
 type SortOption = 'createdAt' | 'price' | 'prepTime';
 type SortOrder = 'asc' | 'desc';
@@ -41,12 +42,13 @@ export default function MenuSection({
         queryKey: ['categories'],
         queryFn: async () => {
             const { data } = await api.get('/products/categories');
-            return data; // Array of { key: string, count: number }
-        }
+            return data;
+        },
+        staleTime: 5 * 60 * 1000 // 5 minutes
     });
 
     // Map backend categories to our UI structure
-    const dynamicCategories = [
+    const dynamicCategories = useMemo(() => [
         {
             key: 'all' as CategoryType,
             label: 'All Items',
@@ -62,66 +64,56 @@ export default function MenuSection({
                 count: cat.count
             };
         })
-    ];
+    ], [categoriesData]);
 
-    const [items, setItems] = useState<MenuItem[]>([]);
-    const [page, setPage] = useState(1);
-    const [hasMore, setHasMore] = useState(true);
-    const [isInitialLoading, setIsInitialLoading] = useState(true);
-    const [isFetchingMore, setIsFetchingMore] = useState(false);
-
-    const observer = useRef<IntersectionObserver | null>(null);
-    const lastItemRef = useCallback((node: HTMLDivElement | null) => {
-        if (isInitialLoading || isFetchingMore) return;
-        if (observer.current) observer.current.disconnect();
-
-        observer.current = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting && hasMore) {
-                setPage(prevPage => prevPage + 1);
-            }
-        });
-
-        if (node) observer.current.observe(node);
-    }, [isInitialLoading, isFetchingMore, hasMore]);
-
-    const fetchItems = useCallback(async (pageNum: number, isNewSearch: boolean = false) => {
-        if (pageNum === 1) setIsInitialLoading(true);
-        else setIsFetchingMore(true);
-
-        try {
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        status: queryStatus,
+        isLoading: isInitialLoading
+    } = useInfiniteQuery({
+        queryKey: ['products', selectedCategory, searchQuery, sortBy, sortOrder],
+        queryFn: async ({ pageParam = 1 }) => {
             const params = new URLSearchParams({
-                page: pageNum.toString(),
+                page: pageParam.toString(),
                 limit: '12',
                 category: selectedCategory,
                 search: searchQuery,
                 sortBy,
                 sortOrder
             });
-
             const { data } = await api.get<PaginatedResponse<MenuItem>>(`/products?${params.toString()}`);
+            return data;
+        },
+        getNextPageParam: (lastPage) => {
+            if (lastPage.meta.currentPage < lastPage.meta.totalPages) {
+                return lastPage.meta.currentPage + 1;
+            }
+            return undefined;
+        },
+        initialPageParam: 1,
+        staleTime: 2 * 60 * 1000 // 2 minutes
+    });
 
-            setItems(prev => isNewSearch ? data.items : [...prev, ...data.items]);
-            setHasMore(data.meta.currentPage < data.meta.totalPages);
-        } catch (error) {
-            console.error("Failed to fetch products:", error);
-        } finally {
-            setIsInitialLoading(false);
-            setIsFetchingMore(false);
-        }
-    }, [selectedCategory, searchQuery, sortBy, sortOrder]);
+    const items = useMemo(() => data?.pages.flatMap(page => page.items) || [], [data]);
 
-    // Reset and fetch when filters change
-    useEffect(() => {
-        setPage(1);
-        fetchItems(1, true);
-    }, [selectedCategory, searchQuery, sortBy, sortOrder]);
+    const observer = useRef<IntersectionObserver | null>(null);
+    const lastItemRef = useCallback((node: HTMLDivElement | null) => {
+        if (isInitialLoading || isFetchingNextPage) return;
+        if (observer.current) observer.current.disconnect();
 
-    // Fetch more when page changes
-    useEffect(() => {
-        if (page > 1) {
-            fetchItems(page);
-        }
-    }, [page]);
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasNextPage) {
+                fetchNextPage();
+            }
+        });
+
+        if (node) observer.current.observe(node);
+    }, [isInitialLoading, isFetchingNextPage, hasNextPage, fetchNextPage]);
+
+    const isFetchingMore = isFetchingNextPage;
 
     return (
         <div className="pt-24 pb-16 min-h-screen">
@@ -229,10 +221,12 @@ export default function MenuSection({
                             >
                                 <div className="relative bg-gradient-to-br from-orange-400 via-red-400 to-pink-400 h-48 flex items-center justify-center overflow-hidden">
                                     {item.image ? (
-                                        <img
+                                        <Image
                                             src={getMediaUrl(item.image)}
                                             alt={item.name}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                            fill
+                                            className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         />
                                     ) : (
                                         <div className="text-8xl group-hover:scale-110 transition-transform">

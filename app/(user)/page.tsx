@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MENU_DATA } from '@/lib/data';
@@ -124,34 +126,28 @@ export default function BSquareEatery() {
         return maxTime + 5;
     }, [cart]);
 
-    const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-    const [popularItems, setPopularItems] = useState<MenuItem[]>([]);
-    const [isMenuLoading, setIsMenuLoading] = useState(true);
+    // Fetch Menu Items & Popular Items using React Query
+    const { data: menuData } = useQuery({
+        queryKey: ['menu', 'all'],
+        queryFn: async () => {
+            const { data } = await api.get('/products?limit=100');
+            return data.items || [];
+        },
+        staleTime: 5 * 60 * 1000
+    });
 
-    // Fetch Menu Items & Popular Items
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsMenuLoading(true);
-            try {
-                // Fetch main menu (paginated default)
-                const menuRes = await import('@/lib/api').then(m => m.default.get('/products?limit=100'));
-                setMenuItems(menuRes.data.items || []);
+    const { data: popularData } = useQuery({
+        queryKey: ['products', 'popular'],
+        queryFn: async () => {
+            const { data } = await api.get('/products?isPopular=true&limit=8');
+            return data.items || [];
+        },
+        staleTime: 5 * 60 * 1000
+    });
 
-                // Fetch popular items explicitly
-                const popularRes = await import('@/lib/api').then(m => m.default.get('/products?isPopular=true&limit=8'));
-                setPopularItems(popularRes.data.items || []);
-            } catch (error) {
-                console.error("Failed to fetch menu data", error);
-                // Fallback
-                const allItems = Object.values(MENU_DATA).flat();
-                setMenuItems(allItems);
-                setPopularItems(allItems.filter(i => i.isPopular));
-            } finally {
-                setIsMenuLoading(false);
-            }
-        };
-        fetchData();
-    }, []);
+    const menuItems = menuData || [];
+    const popularItems = popularData || [];
+    const isMenuLoading = !menuData || !popularData;
 
     const getAllItems = useCallback(() => {
         return menuItems;

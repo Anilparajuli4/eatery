@@ -1,8 +1,7 @@
-'use client';
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Star, Clock, ArrowRight, Plus } from 'lucide-react';
+import Image from 'next/image';
 
 import { MenuItem } from '@/types';
 
@@ -51,10 +50,12 @@ export default function FeaturedItems({ setCurrentPage, products }: FeaturedItem
                         >
                             <div className="relative h-72 overflow-hidden">
                                 {product.image && (
-                                    <img
+                                    <Image
                                         src={product.image}
                                         alt={product.name}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                                        fill
+                                        className="object-cover group-hover:scale-110 transition-transform duration-1000"
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                                     />
                                 )}
                                 <div className="absolute top-4 left-4 bg-orange-500 text-white px-3 py-1.5 rounded-xl flex items-center gap-2 shadow-lg text-xs font-black">

@@ -29,7 +29,7 @@ export default function OrderSuccessModal({ isOpen, onClose, orderDetails, onTra
                         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                     />
 
-                    <div className="relative w-full max-w-lg">
+                    <div className="relative w-full max-w-lg max-h-[95vh] overflow-y-auto custom-scrollbar">
                         <OrderSuccessCard
                             orderDetails={orderDetails}
                             onTrackOrder={onTrackOrder}

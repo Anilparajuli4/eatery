@@ -189,12 +189,12 @@ export default function BSquareEatery() {
                 'drinks': 'SOFT_DRINKS'
             };
             const targetCat = categoryMap[selectedCategory] || selectedCategory;
-            items = menuItems.filter(i => i.category === targetCat);
+            items = menuItems.filter((i: MenuItem) => i.category === targetCat);
         }
 
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
-            items = items.filter(i =>
+            items = items.filter((i: MenuItem) =>
                 i.name.toLowerCase().includes(query) ||
                 i.description.toLowerCase().includes(query)
             );

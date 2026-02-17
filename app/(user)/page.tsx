@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -31,7 +31,7 @@ const STORAGE_KEYS = {
     ORDERS: 'bsquare-orders'
 } as const;
 
-export default function BSquareEatery() {
+const BSquareEateryContent = () => {
     const { logout } = useAuth();
     const { showToast } = useToast();
     const searchParams = useSearchParams();
@@ -513,5 +513,13 @@ export default function BSquareEatery() {
                 />
             )}
         </div>
+    );
+};
+
+export default function BSquareEatery() {
+    return (
+        <React.Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <BSquareEateryContent />
+        </React.Suspense>
     );
 }

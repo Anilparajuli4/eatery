@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MENU_DATA } from '@/lib/data';
 import { MenuItem, CartItem, OrderDetails, Order, PageType, CategoryType } from '@/types';
@@ -31,6 +32,7 @@ const STORAGE_KEYS = {
 export default function BSquareEatery() {
     const { logout } = useAuth();
     const { showToast } = useToast();
+    const searchParams = useSearchParams();
     const [currentPage, setCurrentPage] = useState<PageType>('home');
     const [cart, setCart] = useState<CartItem[]>([]);
     const [favorites, setFavorites] = useState<number[]>([]);
@@ -46,17 +48,26 @@ export default function BSquareEatery() {
         pickupTime: 'asap',
         instructions: '',
         paymentMethod: 'card',
-        address: ''
+        address: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: 'IN'
     });
     const [orderHistory, setOrderHistory] = useState<Order[]>([]);
     const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
     const [showItemModal, setShowItemModal] = useState(false);
     const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-    // Close mobile menu when page changes
+    // Handle query param for page navigation
     useEffect(() => {
-        setMobileMenu(false);
-    }, [currentPage]);
+        const pageParam = searchParams.get('page') as PageType;
+        if (pageParam && ['home', 'menu', 'about', 'location', 'orders'].includes(pageParam)) {
+            setCurrentPage(pageParam);
+        }
+    }, [searchParams]);
+
+    // Close mobile menu when page changes
 
     // Prevent body scroll when cart is open
     useEffect(() => {
@@ -219,7 +230,11 @@ export default function BSquareEatery() {
             pickupTime: 'asap',
             instructions: '',
             paymentMethod: 'card',
-            address: ''
+            address: '',
+            city: '',
+            state: '',
+            postalCode: '',
+            country: 'IN'
         });
     }, []);
 
@@ -240,6 +255,10 @@ export default function BSquareEatery() {
 
                 if (orderDetails.address && orderDetails.address.trim().length > 0) {
                     payload.customerAddress = orderDetails.address;
+                    payload.customerCity = orderDetails.city;
+                    payload.customerState = orderDetails.state;
+                    payload.customerPostalCode = orderDetails.postalCode;
+                    payload.customerCountry = orderDetails.country;
                 }
 
                 const { data } = await import('@/lib/api').then(m => m.default.post('/orders', payload));
@@ -340,7 +359,6 @@ export default function BSquareEatery() {
     const isPhoneValid = useMemo(() => /^[0-9]{10}$/.test(orderDetails.phone.trim()), [orderDetails.phone]);
     const isNameValid = useMemo(() => orderDetails.name.trim().length >= 1, [orderDetails.name]);
 
-    // Address is not required for pickup; only name and phone are required
     const isCheckoutDisabled = checkoutStep === 2 && (!isNameValid || !isPhoneValid);
 
     return (
@@ -477,6 +495,9 @@ export default function BSquareEatery() {
                     amount={Number(getTotal)}
                     customerName={orderDetails.name}
                     customerAddress={orderDetails.address}
+                    customerCity={orderDetails.city}
+                    customerState={orderDetails.state}
+                    customerPostalCode={orderDetails.postalCode}
                     onSuccess={handlePaymentSuccess}
                     onCancel={() => setClientSecret('')}
                 />

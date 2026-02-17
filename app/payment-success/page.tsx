@@ -1,45 +1,85 @@
 'use client';
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Check } from 'lucide-react';
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import OrderSuccessCard from '@/components/user/OrderSuccessCard';
+import api from '@/lib/api';
+import { Order } from '@/types';
 
 function PaymentSuccessContent() {
     const searchParams = useSearchParams();
-    const { user } = useAuth();
+    const router = useRouter();
+    const orderId = searchParams.get('orderId');
+    const [order, setOrder] = useState<Order | null>(null);
+    const [loading, setLoading] = useState(!!orderId);
 
-    // We can get payment_intent_client_secret from URL if redirected
-    // const paymentIntentClientSecret = searchParams.get('payment_intent_client_secret');
+    useEffect(() => {
+        const fetchOrder = async () => {
+            if (!orderId) return;
+            try {
+                const { data } = await api.get(`/orders?ids=${orderId}`);
+                if (data && data.length > 0) {
+                    setOrder(data[0]);
+                }
+            } catch (error) {
+                console.error("Failed to fetch order details", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOrder();
+    }, [orderId]);
+
+    const handleTrackOrder = () => {
+        router.push('/'); // Or specifically to orders page if possible
+        // The user page handles redirection to orders if page is set
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="animate-pulse flex flex-col items-center">
+                    <div className="w-20 h-20 bg-gray-200 rounded-full mb-4"></div>
+                    <div className="h-4 w-48 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-4 w-32 bg-gray-200 rounded"></div>
+                </div>
+            </div>
+        );
+    }
+
+    // Calculate estimated time from order items
+    const calculateEstimatedTime = (orderData: any) => {
+        if (!orderData?.items || orderData.items.length === 0) return '15-20';
+
+        const prepTimes = orderData.items
+            .map((item: any) => item.product?.prepTime || 15);
+
+        const maxTime = Math.max(...prepTimes);
+        return (maxTime + 5).toString();
+    };
+
+    // Fallback if no order found or no orderId
+    const orderDetails = order ? {
+        orderId: order.id.toString(),
+        total: order.total,
+        pickupTime: calculateEstimatedTime(order),
+        paymentMethod: (order.paymentMethod?.toLowerCase() === 'cash' ? 'cash' : 'card') as 'card' | 'cash'
+    } : {
+        orderId: orderId || 'Unknown',
+        total: '0.00',
+        pickupTime: '15-20',
+        paymentMethod: 'card' as const
+    };
 
     return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-md w-full text-center space-y-6 animate-in zoom-in duration-500">
-                <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto shadow-xl">
-                    <Check size={50} className="text-white" />
-                </div>
-
-                <div>
-                    <h1 className="text-4xl font-black text-gray-900 mb-2">Payment Successful!</h1>
-                    <p className="text-gray-500">Thank you for your order, {user?.name || 'Guest'}!</p>
-                </div>
-
-                <div className="bg-green-50 rounded-2xl p-6 border border-green-100">
-                    <p className="text-lg font-bold text-green-800 mb-2">Order Confirmed</p>
-                    <p className="text-green-600 text-sm">
-                        We have received your payment and the kitchen has started preparing your delicious meal.
-                    </p>
-                </div>
-
-                <div className="pt-4">
-                    <Link
-                        href="/"
-                        className="block w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-bold text-lg hover:shadow-lg transition-all"
-                    >
-                        Back to Home
-                    </Link>
-                </div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 sm:p-6 md:p-8">
+            <div className="w-full max-w-lg">
+                <OrderSuccessCard
+                    orderDetails={orderDetails}
+                    onTrackOrder={() => router.push('/?page=orders')}
+                    onContinue={() => router.push('/')}
+                />
             </div>
         </div>
     );

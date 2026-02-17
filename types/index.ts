@@ -25,6 +25,10 @@ export interface OrderDetails {
     instructions: string;
     paymentMethod: 'card' | 'cash';
     address: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
 }
 
 export interface Order {

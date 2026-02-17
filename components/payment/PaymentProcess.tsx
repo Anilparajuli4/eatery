@@ -14,11 +14,25 @@ interface PaymentProcessProps {
     amount: number;
     customerName: string;
     customerAddress: string;
+    customerCity: string;
+    customerState: string;
+    customerPostalCode: string;
     onSuccess: () => void;
     onCancel: () => void;
 }
 
-export default function PaymentProcess({ clientSecret, orderId, amount, customerName, customerAddress, onSuccess, onCancel }: PaymentProcessProps) {
+export default function PaymentProcess({
+    clientSecret,
+    orderId,
+    amount,
+    customerName,
+    customerAddress,
+    customerCity,
+    customerState,
+    customerPostalCode,
+    onSuccess,
+    onCancel
+}: PaymentProcessProps) {
     const options = {
         clientSecret,
         appearance: {
@@ -45,7 +59,16 @@ export default function PaymentProcess({ clientSecret, orderId, amount, customer
                 </div>
 
                 <Elements stripe={stripePromise} options={options}>
-                    <CheckoutForm orderId={orderId} amount={amount} customerName={customerName} customerAddress={customerAddress} onSuccess={onSuccess} />
+                    <CheckoutForm
+                        orderId={orderId}
+                        amount={amount}
+                        customerName={customerName}
+                        customerAddress={customerAddress}
+                        customerCity={customerCity}
+                        customerState={customerState}
+                        customerPostalCode={customerPostalCode}
+                        onSuccess={onSuccess}
+                    />
                 </Elements>
             </div>
         </div>

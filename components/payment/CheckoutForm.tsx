@@ -11,10 +11,22 @@ interface CheckoutFormProps {
     amount: number;
     customerName: string;
     customerAddress: string;
+    customerCity: string;
+    customerState: string;
+    customerPostalCode: string;
     onSuccess: () => void;
 }
 
-export default function CheckoutForm({ orderId, amount, customerName, customerAddress, onSuccess }: CheckoutFormProps) {
+export default function CheckoutForm({
+    orderId,
+    amount,
+    customerName,
+    customerAddress,
+    customerCity,
+    customerState,
+    customerPostalCode,
+    onSuccess
+}: CheckoutFormProps) {
     const stripe = useStripe();
     const elements = useElements();
     const { showToast } = useToast();
@@ -35,13 +47,16 @@ export default function CheckoutForm({ orderId, amount, customerName, customerAd
             elements,
             redirect: 'if_required', // Avoid redirect if possible, easier for SPA
             confirmParams: {
-                return_url: `${window.location.origin}/payment-success`, // Fallback
+                return_url: `${window.location.origin}/payment-success?orderId=${orderId}`, // Fallback
                 payment_method_data: {
                     billing_details: {
                         name: customerName || 'Guest User',
                         address: {
-                            line1: customerAddress,
-                            country: 'IN', // Assuming India based on the error "Indian regulations"
+                            line1: customerAddress || 'N/A',
+                            city: customerCity || 'N/A',
+                            state: customerState || 'N/A',
+                            postal_code: customerPostalCode || 'N/A',
+                            country: 'IN', // As per regulatory requirement for India export
                         }
                     }
                 }
@@ -55,8 +70,8 @@ export default function CheckoutForm({ orderId, amount, customerName, customerAd
             // 2. Verify with Backend
             try {
                 await api.post(`/orders/${orderId}/verify-payment`);
-                showToast('Payment successful! Redirecting you...', 'success');
-                window.location.href = '/payment-success';
+                showToast('Payment successful!', 'success');
+                window.location.href = `/payment-success?orderId=${orderId}`;
             } catch (err: any) {
                 const msg = err.message || "Payment successful but verification failed. Please contact support.";
                 setErrorMessage(msg);
